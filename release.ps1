@@ -19,7 +19,25 @@ function Ensure-CleanTree {
 git rev-parse --is-inside-work-tree *> $null | Out-Null
 if (-not $?) { throw "Not in a git repo." }
 
-if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+# Ensure gh is available, falling back to common install locations when PATH is sanitized
+$gh = Get-Command gh -ErrorAction SilentlyContinue
+if (-not $gh) {
+  $possibleGhDirs = @()
+  if ($env:ProgramFiles) { $possibleGhDirs += (Join-Path $env:ProgramFiles "GitHub CLI") }
+  if ($env:LOCALAPPDATA) { $possibleGhDirs += (Join-Path $env:LOCALAPPDATA "Programs\GitHub CLI") }
+  $programFilesX86 = ${env:ProgramFiles(x86)}
+  if ($programFilesX86) { $possibleGhDirs += (Join-Path $programFilesX86 "GitHub CLI") }
+  foreach ($dir in $possibleGhDirs) {
+    if (-not $dir) { continue }
+    $ghExe = Join-Path $dir 'gh.exe'
+    if (Test-Path $ghExe) {
+      $env:PATH = "$dir;$env:PATH"
+      $gh = Get-Command gh -ErrorAction SilentlyContinue
+      if ($gh) { break }
+    }
+  }
+}
+if (-not $gh) {
   throw "GitHub CLI 'gh' not found. Install and run 'gh auth login'."
 }
 
