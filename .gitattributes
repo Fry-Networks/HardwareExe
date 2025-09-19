@@ -1,0 +1,3 @@
+dist/** !text !filter !merge !diff
+build/** !text !filter !merge !diff
+release/** !text !filter !merge !diff
