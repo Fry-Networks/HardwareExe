@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 import os, sys, re, json, time, subprocess, platform, socket
 from pathlib import Path
 from typing import List
@@ -1591,7 +1591,7 @@ class MainWindow(QtWidgets.QWidget):
                     QtWidgets.QApplication.quit(); return
                     vok, needed, installed = self._check_key_version(ex)
                     if vok is False and (needed or installed):
-                        fry_warn(self, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. Please update to the latest FryNetworks miner for best results.')
+                        fry_warn(self, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
                 except Exception as e:
                     msg = 'The saved miner_key is invalid. Please relaunch and enter a valid key.'
                     if str(e) == 'key_not_found':
@@ -1612,7 +1612,7 @@ class MainWindow(QtWidgets.QWidget):
                     # Warn (do not block) if a newer version is required
                     vok, needed, installed = self._check_key_version(key.strip())
                     if vok is False and (needed or installed):
-                        fry_warn(self, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. Please update to the latest FryNetworks miner for best results.')
+                        fry_warn(self, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
                 except Exception as e:
                     msg = 'The miner_key format is invalid. Please relaunch and try again.'
                     if str(e) == 'key_not_found':
@@ -2651,7 +2651,7 @@ class MainWindow(QtWidgets.QWidget):
                     try:
                         vok, needed, installed = self._check_key_version(key)
                         if vok is False and (needed or installed):
-                            fry_warn(self, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. Please update to the latest FryNetworks miner for best results.')
+                            fry_warn(self, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
                     except Exception:
                         pass
                     # Skip miner_key concurrency enforcement to start immediately
@@ -3371,7 +3371,7 @@ def main():
                 vok, needed, installed = _check_key_version_global(ex)
                 log_step("prestart: version(saved)", {"ok": vok, "needed": needed, "installed": installed})
                 if vok is False and (needed or installed):
-                    fry_warn(None, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. Please update to the latest FryNetworks miner for best results.')
+                    fry_warn(None, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
                 _PRECHECK_OK = True
                 return True
             except Exception:
@@ -3410,7 +3410,7 @@ def main():
                 vok, needed, installed = _check_key_version_global(key)
                 log_step("prestart: version(entered)", {"ok": vok, "needed": needed, "installed": installed})
                 if vok is False and (needed or installed):
-                    fry_warn(None, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. Please update to the latest FryNetworks miner for best results.')
+                    fry_warn(None, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
             except Exception:
                 pass
             _PRECHECK_OK = True
@@ -3476,5 +3476,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
