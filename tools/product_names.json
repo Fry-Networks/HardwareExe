@@ -1,0 +1,11 @@
+{
+"BM": "FRY Bandwidth Miner",
+"ISM": "FRY Indoor Satellite Miner",
+"IDM": "FRY Indoor Decibel Miner",
+"ODM": "FRY Outdoor Decibel Miner",
+"OSM": "FRY Outdoor Satellite Miner",
+"SVN": "FRY Storage Validator Node",
+"SDN": "FRY Storage Decentralization Node",
+"RDN": "FRY Rewards Decentralization Node",
+"AEM": "FRY AI Edge Miner"
+}

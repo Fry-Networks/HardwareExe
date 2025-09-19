@@ -1,3 +1,5 @@
+dist/** filter=lfs diff=lfs merge=lfs -text
+build/** filter=lfs diff=lfs merge=lfs -text
 dist/** !text !filter !merge !diff
 build/** !text !filter !merge !diff
 release/** !text !filter !merge !diff

@@ -1,0 +1,257 @@
+*** Begin Patch
+*** Update File: miner_online_simple.py
+@@
+-    slots_path = f"hours.{hour}.slots"
+-    slot_path  = f"{slots_path}.{slot}"
+-    total_path = f"hours.{hour}.totalSlots"
+-    count_path = f"hours.{hour}.onlineCount"
+-
+-    slots_per_hour = max(1, 3600 // max(1, interval_seconds))
+-    OFFLINE_N = ["offline"] * slots_per_hour
+-
+-    # Normalize MACs for comparison
+-    def _norm_mac(s: Optional[str]) -> str:
+-        try:
+-            return re.sub(r"[^0-9a-f]", "", (s or "").lower())
+-        except Exception:
+-            return ""
+-    mac_mismatch = bool(_norm_mac(miner_mac) and _norm_mac(mac_registered) and (_norm_mac(miner_mac) != _norm_mac(mac_registered)))
+-
+-    coll.update_one(
+-        {"miner_key":miner_key,"date":day},
+-        [
+-            # Ensure the day doc and the hour array exist (default 6 offline slots)
+-            {"$set": {
+-                "miner_key": miner_key,
+-                "miner_type": MINER_CODE,
+-                "software_version": VERSION,
+-                "software_outdated": bool(software_outdated),
+-                "date": day,
+-                "lastUpdated": now_utc(),
+-                "miner_mac": miner_mac or "",
+-                "mac_registered": mac_registered or "",
+-                "mac_mismatch": mac_mismatch,
+-                slots_path: {
+-                    "$cond": [
+-                        { "$and": [ { "$isArray": f"${slots_path}" }, { "$gte": [ { "$size": f"${slots_path}" }, slots_per_hour ] } ] },
+-                        f"${slots_path}",
+-                        OFFLINE_N
+-                    ]
+-                },
+-                total_path: slots_per_hour
+-            }},
+-            # Write the current 10-min slot
+-            {"$set": { slot_path: status }},
+-            # Recompute the per-hour onlineCount from the (now updated) slots array
+-            {"$set": {
+-                count_path: {
+-                    "$size": {
+-                        "$filter": {
+-                            "input": f"${slots_path}",
+-                            "as": "s",
+-                            "cond": { "$eq": ["$$s", "online"] }
+-                        }
+-                    }
+-                }
+-            }}
+-        ],
+-        upsert=True
+-    )
+-
+-    # Fallback/verification and shaping: read back, normalize, and compute counts.
+-    # Also ensure 24 hourly rows are present, and compute day-level percentage.
+-    try:
+-        proj = { "hours": 1, "PoC": 1 }
+-        doc = coll.find_one({"miner_key":miner_key,"date":day}, proj)
+-        hours_doc = doc.get("hours") if isinstance(doc, dict) else {}
+-        if not isinstance(hours_doc, dict):
+-            hours_doc = {}
+-
+-        slots_per_hour = max(1, 3600 // max(1, interval_seconds))
+-        OFFLINE_N = ["offline"] * slots_per_hour
+-
+-        def _norm(x):
+-            if isinstance(x, dict):
+-                if 0 in x: return x[0]
+-                if "0" in x: return x["0"]
+-                if "value" in x: return x["value"]
+-                if len(x)==1:
+-                    return next(iter(x.values()))
+-                return None
+-            return x
+-
+-        updates = {"lastUpdated": now_utc()}
+-        local_doc = {}
+-        try:
+-            cache_doc = read_local_cache(cache_path_for(ts))
+-            if isinstance(cache_doc, dict) and cache_doc.get("date") == day:
+-                local_doc = cache_doc
+-        except Exception:
+-            local_doc = {}
+-
+-        day_total_full = 24 * slots_per_hour
+-        day_online = 0
+-        hourly_online_counts: list[int] = []
+-
+-        for h in range(24):
+-            key = str(h)
+-            cur = hours_doc.get(key)
+-            slots = []
+-            if isinstance(cur, dict):
+-                slots = cur.get("slots") or []
+-            if not isinstance(slots, list):
+-                slots = []
+-            slots = [_norm(s) for s in slots]
+-            if len(slots) < slots_per_hour:
+-                slots = (slots + OFFLINE_N)[:slots_per_hour]
+-
+-            online_count = sum(1 for s in slots if s == "online")
+-            day_online += online_count
+-            hourly_online_counts.append(online_count)
+-
+-        local_online = local_doc.get("onlineCountDay") if isinstance(local_doc, dict) else None
+-        local_total = local_doc.get("totalSlotsDay") if isinstance(local_doc, dict) else None
+-        if isinstance(local_online, int) and isinstance(local_total, int) and local_total > 0:
+-            slots_elapsed = max(1, min(day_total_full, local_total))
+-            day_online_so_far = max(0, min(local_online, slots_elapsed))
+-        else:
+-            slots_elapsed = max(1, min(day_total_full, hour * slots_per_hour + (slot + 1)))
+-            completed_online = sum(hourly_online_counts[:hour])
+-            current_hour_online = hourly_online_counts[hour] if hour < len(hourly_online_counts) else 0
+-            day_online_so_far = completed_online + max(0, min(current_hour_online, slot + 1))
+-
+-        day_percent = round(100.0 * day_online_so_far / max(1, slots_elapsed), 1)
+-
+-        existing_poc = {}
+-        if isinstance(doc, dict):
+-            poc_obj = doc.get("PoC")
+-            if isinstance(poc_obj, dict):
+-                existing_poc = poc_obj
+-
+-        poc_map: dict[str, dict[str, float | str]] = {}
+-        for value in (existing_poc.values() if isinstance(existing_poc, dict) else []):
+-            if isinstance(value, dict):
+-                date_str = value.get("date")
+-                percent_val = value.get("OnlinePercentDay")
+-                if isinstance(date_str, str) and date_str:
+-                    entry = {"date": date_str}
+-                    if isinstance(percent_val, (int, float)):
+-                        entry["OnlinePercentDay"] = float(percent_val)
+-                    poc_map[date_str] = entry
+-
+-        poc_map[day] = {"date": day, "OnlinePercentDay": float(day_percent)}
+-        sorted_days = sorted(poc_map.keys())[-MAX_POC_DAYS:]
+-
+-        updates.update({
+-            "miner_key": miner_key,
+-            "miner_type": MINER_CODE,
+-            "software_version": VERSION,
+-            "software_outdated": bool(software_outdated),
+-            "date": day,
+-            "miner_mac": miner_mac or "",
+-            "mac_registered": mac_registered or "",
+-            "mac_mismatch": bool(mac_mismatch),
+-            "PoC": {str(i): poc_map[d] for i, d in enumerate(sorted_days)},
+-        })
+-
+-        coll.update_one(
+-            {"miner_key": miner_key, "date": day},
+-            {"$set": updates},
+-            upsert=True,
+-        )
+-        coll.update_one(
+-            {"miner_key":miner_key,"date":day},
+-            {"$set": updates}
+-        )
+-    except Exception:
+-        # Non-fatal: rely on server-side pipeline to have updated the count.
+-        pass
++    slots_per_hour = max(1, 3600 // max(1, interval_seconds))
++    day_total_full = 24 * slots_per_hour
++
++    # Normalize MACs for comparison
++    def _norm_mac(s: Optional[str]) -> str:
++        try:
++            return re.sub(r"[^0-9a-f]", "", (s or "").lower())
++        except Exception:
++            return ""
++
++    mac_mismatch = bool(
++        _norm_mac(miner_mac) and _norm_mac(mac_registered) and (_norm_mac(miner_mac) != _norm_mac(mac_registered))
++    )
++
++    filter_doc = {"miner_key": miner_key, "date": day}
++
++    existing_poc: dict[str, Any] = {}
++    try:
++        doc = coll.find_one(filter_doc, {"PoC": 1})
++        if isinstance(doc, dict):
++            poc_obj = doc.get("PoC")
++            if isinstance(poc_obj, dict):
++                existing_poc = poc_obj
++    except Exception:
++        existing_poc = {}
++
++    local_doc: dict[str, Any] = {}
++    try:
++        cache_doc = read_local_cache(cache_path_for(ts))
++        if isinstance(cache_doc, dict) and cache_doc.get("date") == day:
++            local_doc = cache_doc
++    except Exception:
++        local_doc = {}
++
++    slots_elapsed = hour * slots_per_hour + (slot + 1)
++    day_online_so_far = 0
++    local_online = local_doc.get("onlineCountDay") if isinstance(local_doc, dict) else None
++    local_total = local_doc.get("totalSlotsDay") if isinstance(local_doc, dict) else None
++    if isinstance(local_online, int) and isinstance(local_total, int) and local_total > 0:
++        slots_elapsed = max(1, min(day_total_full, local_total))
++        day_online_so_far = max(0, min(local_online, slots_elapsed))
++    elif isinstance(local_online, int):
++        day_online_so_far = max(0, min(local_online, slots_elapsed))
++
++    local_percent = local_doc.get("onlinePercentDay") if isinstance(local_doc, dict) else None
++    if isinstance(local_percent, (int, float)):
++        day_percent = round(float(local_percent), 1)
++    elif slots_elapsed > 0:
++        day_percent = round(100.0 * day_online_so_far / max(1, slots_elapsed), 1)
++    else:
++        day_percent = 0.0
++
++    poc_map: dict[str, dict[str, float | str]] = {}
++    for value in (existing_poc.values() if isinstance(existing_poc, dict) else []):
++        if isinstance(value, dict):
++            date_str = value.get("date")
++            percent_val = value.get("OnlinePercentDay")
++            if isinstance(date_str, str) and date_str:
++                entry: dict[str, float | str] = {"date": date_str}
++                if isinstance(percent_val, (int, float)):
++                    entry["OnlinePercentDay"] = float(percent_val)
++                poc_map[date_str] = entry
++
++    poc_map[day] = {"date": day, "OnlinePercentDay": float(day_percent)}
++    sorted_days = sorted(poc_map.keys())[-MAX_POC_DAYS:]
++
++    updates = {
++        "miner_key": miner_key,
++        "miner_type": MINER_CODE,
++        "software_version": VERSION,
++        "software_outdated": bool(software_outdated),
++        "date": day,
++        "lastUpdated": now_utc(),
++        "miner_mac": miner_mac or "",
++        "mac_registered": mac_registered or "",
++        "mac_mismatch": bool(mac_mismatch),
++        "PoC": {str(i): poc_map[d] for i, d in enumerate(sorted_days)},
++    }
++
++    try:
++        coll.update_one(
++            filter_doc,
++            {"$set": updates, "$unset": {"hours": ""}},
++            upsert=True,
++        )
++    except Exception:
++        # Non-fatal: rely on server-side pipeline to have updated the count.
++        pass
+*** End Patch
