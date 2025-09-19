@@ -73,7 +73,7 @@ $existingAssets = @()
 try {
   $existingAssets = gh release view $Tag --json assets --jq '.assets[].name'
 } catch {
-  Write-Warning "Unable to list existing assets for $Tag: $($_.Exception.Message)"
+  Write-Warning "Unable to list existing assets for ${Tag}: $($_.Exception.Message)"
 }
 if ($existingAssets) {
   foreach ($asset in $existingAssets) {
@@ -138,3 +138,4 @@ Rollback:
   git tag -f $Tag $OldPointer
   git push $Remote -f $Tag
 "@ | Write-Output
+
