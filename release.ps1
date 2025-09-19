@@ -67,6 +67,27 @@ if ($releaseExists) {
   gh release create $Tag --title "$Version" --notes "Release $Version"
 }
 
+# --- Remove previous executables for this moving tag so auto-update only grabs the latest build ---
+$cleanupPattern = "^FRY_" + [regex]::Escape($Tag) + "_.+\.exe$"
+$existingAssets = @()
+try {
+  $existingAssets = gh release view $Tag --json assets --jq '.assets[].name'
+} catch {
+  Write-Warning "Unable to list existing assets for $Tag: $($_.Exception.Message)"
+}
+if ($existingAssets) {
+  foreach ($asset in $existingAssets) {
+    if ($asset -match $cleanupPattern) {
+      try {
+        gh release delete-asset $Tag $asset --yes | Out-Null
+        Write-Host "Removed old asset: $asset"
+      } catch {
+        Write-Warning "Failed to remove asset '$asset': $($_.Exception.Message)"
+      }
+    }
+  }
+}
+
 # --- Select artifact: explicit path OR auto-discover newest exe (excluding FRY_PoC*.exe) ---
 $ChosenArtifact = $null
 
