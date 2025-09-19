@@ -55,7 +55,13 @@ git tag -f $Tag $Version
 git push $Remote -f $Tag
 
 # --- Ensure Release exists for $Tag and set title/notes to $Version ---
-if (gh release view $Tag *> $null) {
+$releaseExists = $false
+gh release view $Tag *> $null
+if ($LASTEXITCODE -eq 0) {
+  $releaseExists = $true
+}
+
+if ($releaseExists) {
   gh release edit $Tag --title "$Version" --notes "Release $Version"
 } else {
   gh release create $Tag --title "$Version" --notes "Release $Version"
