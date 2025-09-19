@@ -662,6 +662,8 @@ def _check_key_version_global(key: str) -> tuple[bool | None, str | None, str | 
 
 # Marker set by pre-start validation so MainWindow can skip duplicate prompts
 _PRECHECK_OK: bool = False
+# Flip to True when prestart version check finds we are behind so the GUI auto-updater can run even if config says up-to-date.
+_FORCE_UPDATE_REQUIRED: bool = False
 
 def is_internet_up(timeout=4) -> bool:
     try:
@@ -1516,6 +1518,8 @@ class MainWindow(QtWidgets.QWidget):
                 sw_flag = sw_flag_raw
             if sw_flag is None:
                 sw_flag = True
+            if _FORCE_UPDATE_REQUIRED:
+                sw_flag = False
             if sw_flag:
                 raise RuntimeError('already_uptodate')
             if not use_github:
@@ -3342,7 +3346,7 @@ def main():
         pass
     splash.show()
     def _prestart_gate() -> bool:
-        global _PRECHECK_OK
+        global _PRECHECK_OK, _FORCE_UPDATE_REQUIRED
         ex = read_miner_key()
         log_step("prestart: begin", {"have_saved_key": bool(ex)})
         if ex:
@@ -3371,6 +3375,7 @@ def main():
                 vok, needed, installed = _check_key_version_global(ex)
                 log_step("prestart: version(saved)", {"ok": vok, "needed": needed, "installed": installed})
                 if vok is False and (needed or installed):
+                    _FORCE_UPDATE_REQUIRED = True
                     fry_warn(None, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
                 _PRECHECK_OK = True
                 return True
@@ -3410,6 +3415,7 @@ def main():
                 vok, needed, installed = _check_key_version_global(key)
                 log_step("prestart: version(entered)", {"ok": vok, "needed": needed, "installed": installed})
                 if vok is False and (needed or installed):
+                    _FORCE_UPDATE_REQUIRED = True
                     fry_warn(None, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
             except Exception:
                 pass
