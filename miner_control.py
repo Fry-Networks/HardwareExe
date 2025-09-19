@@ -1935,7 +1935,7 @@ class MainWindow(QtWidgets.QWidget):
                         self.noticeMsg = QtWidgets.QLabel("")
                     # If outdated, display persistent notice in the header area
                     if (vok is False):
-                        msg = f"This device requires version {needed}, but you have {installed or VERSION}. Please update to the latest FryNetworks miner."
+                        msg = f"This device requires version {needed}, but you have {installed or VERSION}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update."
                         try:
                             self.noticeMsg.setText(msg)
                             # Keep the same theme as the Update button
