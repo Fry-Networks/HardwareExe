@@ -117,6 +117,11 @@ class FrySplash(QtWidgets.QDialog):
         except Exception:
             bp = resource_path("images/background.png")
         banner_img = str(bp) if hasattr(bp, 'exists') and bp.exists() else (bp if isinstance(bp, str) else None)
+        try:
+            self._theme = Theme() if callable(Theme) else None
+        except Exception:
+            self._theme = None
+
         self.banner = TopBanner(f"FRY {DISPLAY_NAME} - v{VERSION}", banner_img, height=80)
         try:
             # Slightly smaller title font on splash to fit compact width
@@ -1094,6 +1099,7 @@ class MainWindow(QtWidgets.QWidget):
         self._persistedMacValue = None
         self._prunedOldServiceBinaries = False
         self._downloadedUpdatePath: str = ''
+        self._serviceStatusRefreshScheduled = False
 
         # --- Selectors depending on group ---
         if GROUP in ("Bandwidth","AIEdge"):
@@ -2466,6 +2472,17 @@ class MainWindow(QtWidgets.QWidget):
                     self._prunedOldServiceBinaries = True
             except Exception:
                 pass
+            if st == 'START_PENDING' and not self._serviceStatusRefreshScheduled:
+                self._serviceStatusRefreshScheduled = True
+                def _refresh_status():
+                    setattr(self, '_serviceStatusRefreshScheduled', False)
+                    try:
+                        self.run_selfcheck()
+                    except Exception:
+                        pass
+                QtCore.QTimer.singleShot(5000, _refresh_status)
+            elif st != 'START_PENDING':
+                self._serviceStatusRefreshScheduled = False
             is_win = sys.platform.startswith('win')
             try:
                 self.btnInstall.setVisible(bool(is_win and st == 'NOT INSTALLED'))
