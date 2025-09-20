@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os, sys, re, json, time, subprocess, platform, socket
 from pathlib import Path
-from typing import List, Any, cast
+from typing import List, Any, Optional, Sequence, cast
 
 import psutil
 import requests
@@ -10,6 +10,12 @@ from banner import TopBanner
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from cache_integrity import verify_cache_signature
 from gui_updater import GuiAutoUpdater
+
+try:
+    from theme import Theme
+except Exception:
+    Theme = None  # type: ignore
+
 from miner_online_simple import load_config, connect_mongo, registered_mac_from_devices
 from gui_updater import GuiAutoUpdater
 
@@ -17,12 +23,14 @@ try:
     import sounddevice as sd
     HAVE_SD = True
 except Exception:
+    sd = cast(Any, None)
     HAVE_SD = False
 
 try:
     import serial, serial.tools.list_ports
     HAVE_SERIAL = True
 except Exception:
+    serial = cast(Any, None)
     HAVE_SERIAL = False
 
 try:
@@ -816,12 +824,16 @@ class HourlyBar(QtWidgets.QWidget):
         self.canvas=FigureCanvas(self.fig)
         lay=QtWidgets.QVBoxLayout(self); lay.addWidget(self.canvas)
         self.draw_counts([0]*24, [f"{h:02d}" for h in range(24)])
-    def draw_counts(self, counts: list[int], labels: list[str]):
-        if not HAVE_MPL: return
+    def draw_counts(self, counts: Sequence[float], labels: Sequence[str]):
+        if not HAVE_MPL:
+            return
         self.ax.clear()
         self.ax.set_facecolor("#121212")
         self.fig.patch.set_facecolor("#121212")
-        self.ax.bar(range(24), counts, color="#dc2626", alpha=0.85)  # shadow-red-600
+        values = [float(c) for c in counts]
+        n = min(24, len(values))
+        values = (values + [0.0]*24)[:24]
+        self.ax.bar(range(24), values, color="#dc2626", alpha=0.85)  # shadow-red-600
         # Display y-axis as percentage (0..100) like the 7-day view
         self.ax.set_ylim(0,100)
         try:
@@ -834,7 +846,8 @@ class HourlyBar(QtWidgets.QWidget):
             spine.set_color("#7e7e7e")
         xticks = list(range(0,24,3))
         self.ax.set_xticks(xticks)
-        self.ax.set_xticklabels([labels[i] for i in xticks], color="#9e9e9e")
+        label_list = list(labels)
+        self.ax.set_xticklabels([label_list[i] if i < len(label_list) else "" for i in xticks], color="#9e9e9e")
         try:
             # Let Matplotlib allocate space so tick labels remain visible on resize
             self.fig.tight_layout(pad=0.6)
@@ -1080,6 +1093,7 @@ class MainWindow(QtWidgets.QWidget):
         self.activeMacAddress = None
         self._persistedMacValue = None
         self._prunedOldServiceBinaries = False
+        self._downloadedUpdatePath: str = ''
 
         # --- Selectors depending on group ---
         if GROUP in ("Bandwidth","AIEdge"):
@@ -1143,9 +1157,9 @@ class MainWindow(QtWidgets.QWidget):
             self.deviceCombo=QtWidgets.QComboBox(); self.deviceCombo.setFixedWidth(360)
             self.deviceHelp=QtWidgets.QLabel("")
             self.btnApplyMic = QtWidgets.QPushButton("Update"); self.btnApplyMic.setVisible(False)
-            self.btnApplyMic.clicked.connect(self._apply_microphone_selection)
-            self._populate_microphones()
-            self.deviceCombo.currentIndexChanged.connect(lambda _: self._on_microphone_selection_changed())
+            self.btnApplyMic.clicked.connect(self._apply_microphone_selection)  # type: ignore[attr-defined]
+            self._populate_microphones()  # type: ignore[attr-defined]
+            self.deviceCombo.currentIndexChanged.connect(lambda _: self._on_microphone_selection_changed())  # type: ignore[attr-defined]
 
             self.settingsGb = QtWidgets.QGroupBox("Settings")
             try:
@@ -1202,9 +1216,9 @@ class MainWindow(QtWidgets.QWidget):
             self.deviceCombo=QtWidgets.QComboBox(); self.deviceCombo.setFixedWidth(360)
             self.deviceHelp=QtWidgets.QLabel("")
             self.btnApplyGnss = QtWidgets.QPushButton("Update"); self.btnApplyGnss.setVisible(False)
-            self.btnApplyGnss.clicked.connect(self._apply_gnss_selection)
-            self._populate_gnss()
-            self.deviceCombo.currentIndexChanged.connect(lambda _: self._on_gnss_selection_changed())
+            self.btnApplyGnss.clicked.connect(self._apply_gnss_selection)  # type: ignore[attr-defined]
+            self._populate_gnss()  # type: ignore[attr-defined]
+            self.deviceCombo.currentIndexChanged.connect(lambda _: self._on_gnss_selection_changed())  # type: ignore[attr-defined]
 
             self.settingsGb = QtWidgets.QGroupBox("Settings")
             try:
@@ -1241,7 +1255,7 @@ class MainWindow(QtWidgets.QWidget):
             sLay.addWidget(self.btnApplyGnss)
             sLay.addStretch(1)
         if hasattr(self, 'networkValueLabel'):
-            self._refresh_network_info()
+            self._refresh_network_info()  # type: ignore[attr-defined]
 
         # Rolling 24h chart header and widget
         self.online24Label = QtWidgets.QLabel("Online last 24h: -")
@@ -1280,7 +1294,7 @@ class MainWindow(QtWidgets.QWidget):
         menu = QtWidgets.QMenu()
         try:
             act_clean = menu.addAction("Clean previous versions...")
-            act_clean.triggered.connect(self._on_clean_clicked)
+            act_clean.triggered.connect(self._on_clean_clicked)  # type: ignore[attr-defined]
         except Exception:
             pass
         act_quit = menu.addAction("Quit"); act_quit.triggered.connect(self._on_tray_quit)
@@ -1336,7 +1350,7 @@ class MainWindow(QtWidgets.QWidget):
         except Exception:
             pass
         try:
-            self.btnRestartUpdate.clicked.connect(self._on_restart_update)
+            self.btnRestartUpdate.clicked.connect(self._on_restart_update)  # type: ignore[attr-defined]
         except Exception:
             pass
         dashLay.addWidget(self.btnRestartUpdate)
@@ -1360,13 +1374,13 @@ class MainWindow(QtWidgets.QWidget):
         self.online7Label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
         try:
             self.online7Label.setStyleSheet("font-size: 24px; font-weight: 700;")
-            self.online7Label.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+            self.online7Label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
             self.online7Label.setMinimumHeight(26)
         except Exception:
             pass
         self.chart7 = Rolling7Bar(self)
         try:
-            self.chart7.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+            self.chart7.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
             self.chart7.setMinimumHeight(140)
         except Exception:
             pass
@@ -1386,7 +1400,7 @@ class MainWindow(QtWidgets.QWidget):
         lay.addWidget(leftPane)
         lay.addWidget(rightPane)
         try:
-            onlineGb.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+            onlineGb.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         except Exception:
             pass
         dashLay.addWidget(onlineGb)
@@ -1431,17 +1445,18 @@ class MainWindow(QtWidgets.QWidget):
             self.livePanel = load_live_panel(GROUP, width=800)
             if self.livePanel is not None:
                 try:
-                    if GROUP == "Decibel" and hasattr(self.livePanel, 'set_device_label') and hasattr(self, 'deviceCombo'):
-                        self.livePanel.set_device_label(self.deviceCombo.currentText())
-                    if GROUP == "Satellite" and hasattr(self.livePanel, 'set_device_label') and hasattr(self, 'deviceCombo'):
-                        self.livePanel.set_device_label(self.deviceCombo.currentText())
+                    panel = getattr(self, 'livePanel', None)
+                    if GROUP == "Decibel" and panel is not None and hasattr(panel, 'set_device_label') and hasattr(self, 'deviceCombo'):
+                        cast(Any, panel).set_device_label(self.deviceCombo.currentText())
+                    if GROUP == "Satellite" and panel is not None and hasattr(panel, 'set_device_label') and hasattr(self, 'deviceCombo'):
+                        cast(Any, panel).set_device_label(self.deviceCombo.currentText())
                 except Exception:
                     pass
                 # Show the panel for all groups; hide the old label to keep appearance
                 try:
                     # Constrain panel vertically so it doesn't consume all space; allow horizontal expansion
                     try:
-                        self.livePanel.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+                        self.livePanel.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
                         self.livePanel.setMaximumHeight(max(80, int(self.livePanel.sizeHint().height())))
                     except Exception:
                         pass
@@ -1459,7 +1474,7 @@ class MainWindow(QtWidgets.QWidget):
             pass
         try:
             # Let live data expand to full available width
-            liveGb.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+            liveGb.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
         except Exception:
             pass
         try:
@@ -1482,10 +1497,10 @@ class MainWindow(QtWidgets.QWidget):
         # Service controls: Install (when NOT INSTALLED) and Start (when STOPPED)
         self.btnInstall = QtWidgets.QPushButton("Install service")
         self.btnInstall.setVisible(False)
-        self.btnInstall.clicked.connect(self._on_install_clicked)
+        self.btnInstall.clicked.connect(self._on_install_clicked)  # type: ignore[attr-defined]
         self.btnStart = QtWidgets.QPushButton("Start service")
         self.btnStart.setVisible(False)
-        self.btnStart.clicked.connect(self._on_start_clicked)
+        self.btnStart.clicked.connect(self._on_start_clicked)  # type: ignore[attr-defined]
         grid=QtWidgets.QGridLayout()
         grid.addWidget(self.chkService,0,0); grid.addWidget(self.chkInternet,0,1)
         grid.addWidget(self.chkLocal,1,0); grid.addWidget(self.btnInstall,0,2); grid.addWidget(self.btnStart,1,2)
@@ -1499,7 +1514,7 @@ class MainWindow(QtWidgets.QWidget):
         except Exception:
             pass
         try:
-            gb.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+            gb.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         except Exception:
             pass
         dashLay.addWidget(gb)
@@ -1515,7 +1530,7 @@ class MainWindow(QtWidgets.QWidget):
 
         # Start periodic version monitor to surface backend requirement changes
         try:
-            self._start_version_monitor()
+            self._start_version_monitor()  # type: ignore[attr-defined]
         except Exception:
             pass
 
@@ -1533,10 +1548,6 @@ class MainWindow(QtWidgets.QWidget):
                     ok, det = self._check_key_concurrency(ex)
                     if not ok and isinstance(det, dict) and det:
                         raise RuntimeError('key_in_use' + _format_conflict_details(det))
-                except Exception as e:
-                    msg = _in_use_message(ex, str(e).removeprefix('key_in_use'))
-                    fry_error(self, 'Miner Key', msg)
-                    QtWidgets.QApplication.quit(); return
                     vok, needed, installed = self._check_key_version(ex)
                     if vok is False and (needed or installed):
                         fry_warn(self, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
@@ -1555,7 +1566,7 @@ class MainWindow(QtWidgets.QWidget):
                     QtWidgets.QApplication.quit(); return
                 self.keyEdit.setText(key)
                 try:
-                    self._validated_key()
+                    self._validated_key()  # type: ignore[attr-defined]
                     self.keyEdit.setReadOnly(True)
                     # Warn (do not block) if a newer version is required
                     vok, needed, installed = self._check_key_version(key.strip())
@@ -1585,9 +1596,9 @@ class MainWindow(QtWidgets.QWidget):
         # On launch: proactively clean older versions for this miner type
         if sys.platform.startswith('win'):
             try:
-                if self._has_old_services_or_processes():
+                if self._has_old_services_or_processes():  # type: ignore[attr-defined]
                     if ensure_admin_windows():
-                        self._cleanup_old_versions()
+                        self._cleanup_old_versions()  # type: ignore[attr-defined]
                     else:
                         # Relaunch elevated once to perform cleanup
                         if relaunch_as_admin():
@@ -1599,11 +1610,11 @@ class MainWindow(QtWidgets.QWidget):
                 # Best-effort; continue
                 pass
 
-        QtCore.QTimer.singleShot(200, self.run_selfcheck)
-        self._poller = QtCore.QTimer(self); self._poller.timeout.connect(self.run_selfcheck); self._poller.start(30000)
+        QtCore.QTimer.singleShot(200, self.run_selfcheck)  # type: ignore[attr-defined]
+        self._poller = QtCore.QTimer(self); self._poller.timeout.connect(self.run_selfcheck)  # type: ignore[attr-defined]; self._poller.start(30000)
 
         # Start live worker
-        self._start_live()
+        self._start_live()  # type: ignore[attr-defined]
 
     # ----- tray restore -----
     def _on_tray_activated(self, reason):
@@ -1611,7 +1622,7 @@ class MainWindow(QtWidgets.QWidget):
                       QtWidgets.QSystemTrayIcon.ActivationReason.DoubleClick):
             try:
                 self.showNormal()
-                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized)
+                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowState.WindowMinimized)
                 self.raise_()
                 self.activateWindow()
             except Exception:
@@ -1669,7 +1680,7 @@ class MainWindow(QtWidgets.QWidget):
                     pass
             # Kill any remaining processes for this miner type; also remove local lock
             try:
-                self._force_local_cleanup_current_type()
+                self._force_local_cleanup_current_type()  # type: ignore[attr-defined]
             except Exception:
                 pass
             # Also remove scheduled autostart task so GUI won't relaunch automatically
@@ -1786,7 +1797,7 @@ class MainWindow(QtWidgets.QWidget):
             return False, (doc if doc else {"reason": "error"})
         except Exception:
             log_step("check_concurrency: exception")
-            return False, "error"
+            return False, {"reason": "exception"}
 
     def _check_key_version(self, key: str) -> tuple[bool | None, str | None, str | None]:
         """Return (ok, needed, installed) using service's version check.
@@ -1829,7 +1840,7 @@ class MainWindow(QtWidgets.QWidget):
             token_cfg = cfg.get('github_token')
             token_present = isinstance(token_cfg, str) and bool(token_cfg.strip())
             if token_present and not os.environ.get('GITHUB_TOKEN'):
-                os.environ['GITHUB_TOKEN'] = token_cfg
+                os.environ['GITHUB_TOKEN'] = cast(str, token_cfg)
             use_github = bool(cfg.get('use_github'))
             sw_flag_raw = cfg.get('software_uptodate')
             sw_flag = None
@@ -1977,13 +1988,8 @@ class MainWindow(QtWidgets.QWidget):
             QtWidgets.QApplication.quit()
         else:
             fry_warn(self, 'Update', 'Update package is no longer available. Please check for updates again.')
-``
     def _start_version_monitor(self):
-        try:
-            # Remember last seen requirement to only notify on change
-            self._lastNeeded: str | None = None
-        except Exception:
-            self._lastNeeded = None
+        self._lastNeeded = cast(Optional[str], None)
         try:
             # Poll interval (seconds). Prefer builder variable in config_profile (VERSION_CHECK_SEC),
             # fall back to env FRY_VERSION_CHECK_SEC, then default 600s. Minimum 60s.
@@ -2204,7 +2210,8 @@ class MainWindow(QtWidgets.QWidget):
                     pass
                 if isinstance(fam, str) and fam.endswith("AF_LINK"):
                     return addr.address
-                if hasattr(fam, "name") and fam.name == "AF_LINK":
+                name_attr = getattr(fam, 'name', None)
+                if name_attr == 'AF_LINK':
                     return addr.address
         except Exception:
             pass
@@ -2321,8 +2328,11 @@ class MainWindow(QtWidgets.QWidget):
             self.deviceCombo.clear(); self.deviceCombo.addItem("No audio API"); return
         try:
             self.deviceCombo.clear()
+            devices = sd.query_devices()
             # List only usable input devices
-            for idx, dev in enumerate(sd.query_devices()):
+            for idx, dev in enumerate(devices):
+                if not isinstance(dev, dict):
+                    continue
                 try:
                     if int(dev.get('max_input_channels', 0)) <= 0:
                         continue
@@ -2331,8 +2341,9 @@ class MainWindow(QtWidgets.QWidget):
                         sd.check_input_settings(device=idx, channels=1)
                     except Exception:
                         continue
-                    name = dev.get('name','input')
-                    self.deviceCombo.addItem(f"{name} (#{idx})", idx)
+                    name = str(dev.get('name', 'input'))
+                    display = f"{name} (#{idx})"
+                    self.deviceCombo.addItem(display, idx)
                 except Exception:
                     continue
         except Exception as e:
@@ -2343,8 +2354,13 @@ class MainWindow(QtWidgets.QWidget):
             self.deviceCombo.clear(); self.deviceCombo.addItem("No serial API"); return
         try:
             self.deviceCombo.clear()
-            for p in serial.tools.list_ports.comports():
-                self.deviceCombo.addItem(f"{p.device} - {p.description}", p.device)
+            ports = serial.tools.list_ports.comports() if hasattr(serial, 'tools') else []
+            for p in ports:
+                device_name = getattr(p, 'device', '')
+                desc = getattr(p, 'description', '')
+                label = f"{device_name} - {desc}" if device_name and desc else str(device_name or desc or 'serial')
+                if device_name:
+                    self.deviceCombo.addItem(label, device_name)
         except Exception as e:
             self.deviceCombo.addItem(f"Serial error: {e}")
 
@@ -2363,8 +2379,9 @@ class MainWindow(QtWidgets.QWidget):
                 self.btnApplyMic.setVisible(False)
             # Update live panel label if present
             try:
-                if getattr(self, 'livePanel', None) is not None and hasattr(self.livePanel, 'set_device_label'):
-                    self.livePanel.set_device_label(self.deviceCombo.currentText())
+                panel = getattr(self, 'livePanel', None)
+                if panel is not None and hasattr(panel, 'set_device_label') and hasattr(self, 'deviceCombo'):
+                    cast(Any, panel).set_device_label(self.deviceCombo.currentText())
             except Exception:
                 pass
         except Exception:
@@ -2384,8 +2401,9 @@ class MainWindow(QtWidgets.QWidget):
             if hasattr(self, 'btnApplyGnss'):
                 self.btnApplyGnss.setVisible(False)
             try:
-                if getattr(self, 'livePanel', None) is not None and hasattr(self.livePanel, 'set_device_label'):
-                    self.livePanel.set_device_label(self.deviceCombo.currentText())
+                panel = getattr(self, 'livePanel', None)
+                if panel is not None and hasattr(panel, 'set_device_label') and hasattr(self, 'deviceCombo'):
+                    cast(Any, panel).set_device_label(self.deviceCombo.currentText())
             except Exception:
                 pass
         except Exception:
@@ -2407,7 +2425,7 @@ class MainWindow(QtWidgets.QWidget):
         self._liveWorker.tick.connect(self._on_live); self._liveWorker.start()
 
     def _restart_live(self):
-        self._start_live()
+        self._start_live()  # type: ignore[attr-defined]
 
     # --- actions ---
     def refresh_chart(self):
@@ -2649,9 +2667,6 @@ class MainWindow(QtWidgets.QWidget):
             except Exception:
                 # Continue regardless; we verify service status below
                 pass
-            # (removed stray duplicate except)
-                # Continue regardless; we verify service status below
-                pass
             # Block on exclusive-pair conflict
             conflict = self._exclusive_conflict_running()
             if conflict:
@@ -2659,12 +2674,12 @@ class MainWindow(QtWidgets.QWidget):
                 QtWidgets.QApplication.quit(); return
             # Best-effort cleanup of stale instances/old services
             try:
-                self._force_local_cleanup_current_type()
+                self._force_local_cleanup_current_type()  # type: ignore[attr-defined]
             except Exception:
                 pass
             try:
-                if self._has_old_services_or_processes():
-                    self._cleanup_old_versions()
+                if self._has_old_services_or_processes():  # type: ignore[attr-defined]
+                    self._cleanup_old_versions()  # type: ignore[attr-defined]
             except Exception:
                 pass
             # Install silently if not present
@@ -2785,16 +2800,16 @@ class MainWindow(QtWidgets.QWidget):
                 return
             # Proactively kill any other local instances for this miner type and clear lock
             try:
-                self._force_local_cleanup_current_type()
+                self._force_local_cleanup_current_type()  # type: ignore[attr-defined]
             except Exception:
                 pass
             # Also ensure older services are removed
             try:
-                self._cleanup_old_versions()
+                self._cleanup_old_versions()  # type: ignore[attr-defined]
             except Exception:
                 pass
             self.start_service()
-            QtCore.QTimer.singleShot(1500, self.run_selfcheck)
+            QtCore.QTimer.singleShot(1500, self.run_selfcheck)  # type: ignore[attr-defined]
         except Exception as e:
             QtWidgets.QMessageBox.warning(self, 'Start failed', f'Could not start service: {e}')
 
@@ -2848,13 +2863,13 @@ class MainWindow(QtWidgets.QWidget):
                         return
             except Exception:
                 pass
-            self._cleanup_old_versions()
+            self._cleanup_old_versions()  # type: ignore[attr-defined]
         except Exception:
             pass
         try:
             self._install_service_silent()
             self.start_service()
-            QtCore.QTimer.singleShot(1500, self.run_selfcheck)
+            QtCore.QTimer.singleShot(1500, self.run_selfcheck)  # type: ignore[attr-defined]
         except Exception as e:
             QtWidgets.QMessageBox.warning(self, 'Install failed', f'Could not install/start service: {e}')
 
@@ -2945,9 +2960,9 @@ class MainWindow(QtWidgets.QWidget):
                 return
             QtWidgets.QApplication.quit(); return
         try:
-            self._cleanup_old_versions()
+            self._cleanup_old_versions()  # type: ignore[attr-defined]
             QtWidgets.QMessageBox.information(self, 'Cleanup', 'Cleaned older services/processes (if any).')
-            QtCore.QTimer.singleShot(1000, self.run_selfcheck)
+            QtCore.QTimer.singleShot(1000, self.run_selfcheck)  # type: ignore[attr-defined]
         except Exception as e:
             QtWidgets.QMessageBox.warning(self, 'Cleanup failed', f'Cleanup error: {e}')
 
@@ -3105,16 +3120,23 @@ class _DayReadLock:
             except Exception:
                 try:
                     import fcntl  # type: ignore
-                    deadline = time.time() + (self.block_ms / 1000.0)
-                    while True:
-                        try:
-                            fcntl.flock(fh.fileno(), fcntl.LOCK_SH | fcntl.LOCK_NB)
-                            break
-                        except Exception:
-                            if time.time() >= deadline:
+                    flock_fn = getattr(fcntl, 'flock', None)
+                    lock_sh = getattr(fcntl, 'LOCK_SH', None)
+                    lock_nb = getattr(fcntl, 'LOCK_NB', None)
+                    if callable(flock_fn) and lock_sh is not None and lock_nb is not None:
+                        deadline = time.time() + (self.block_ms / 1000.0)
+                        while True:
+                            try:
+                                flock_fn(fh.fileno(), lock_sh | lock_nb)
                                 break
-                            time.sleep(0.03)
+                            except Exception:
+                                if time.time() >= deadline:
+                                    break
+                                time.sleep(0.03)
                 except Exception:
+                    pass
+                else:
+                    # Fallback could not lock; proceed without advisory lock
                     pass
         except Exception:
             self._fh = None
@@ -3129,7 +3151,10 @@ class _DayReadLock:
             except Exception:
                 try:
                     import fcntl  # type: ignore
-                    fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+                    flock_fn = getattr(fcntl, 'flock', None)
+                    lock_un = getattr(fcntl, 'LOCK_UN', None)
+                    if callable(flock_fn) and lock_un is not None:
+                        flock_fn(fh.fileno(), lock_un)
                 except Exception:
                     pass
         finally:
@@ -3353,34 +3378,7 @@ def main():
                 QtWidgets.QApplication.processEvents()
             except Exception:
                 pass
-    class StartupScreen(QtWidgets.QDialog):
-        def __init__(self):
-            super().__init__(None, QtCore.Qt.WindowType.FramelessWindowHint | QtCore.Qt.WindowType.Dialog)
-            self.setModal(False)
-            self.setObjectName("StartupScreen")
-            self.resize(520, 220)
-            lay = QtWidgets.QVBoxLayout(self); lay.setContentsMargins(24, 24, 24, 24); lay.setSpacing(12)
-            self.title = QtWidgets.QLabel(f"FRY {MINER_CODE} Miner")
-            f = self.title.font(); f.setPointSize(f.pointSize()+2); f.setBold(True); self.title.setFont(f)
-            self.msg = QtWidgets.QLabel("Initializing..."); self.msg.setWordWrap(True)
-            self.bar = QtWidgets.QProgressBar(); self.bar.setRange(0, 100); self.bar.setValue(0)
-            logo_path = resource_path("images/frynetworks_logo.png")
-            if os.path.exists(logo_path):
-                pix = QtGui.QPixmap(logo_path)
-                if not pix.isNull():
-                    logo = QtWidgets.QLabel(); logo.setPixmap(pix.scaledToHeight(48, QtCore.Qt.TransformationMode.SmoothTransformation))
-                    lay.addWidget(logo, 0, QtCore.Qt.AlignmentFlag.AlignHCenter)
-            lay.addWidget(self.title)
-            lay.addWidget(self.msg)
-            lay.addWidget(self.bar)
-        def step(self, text: str, value: int):
-            try:
-                self.msg.setText(text)
-                self.bar.setValue(max(0, min(100, value)))
-                QtWidgets.QApplication.processEvents()
-            except Exception:
-                pass
-    from theme import Theme
+
     def _excepthook(exctype, value, tb):
         import traceback
         logp = resource_path("miner_gui.log")
@@ -3438,8 +3436,13 @@ def main():
 
     splash = FrySplash()
     try:
+        theme_obj = Theme() if callable(Theme) else None
+    except Exception:
+        theme_obj = None
+    try:
         # Apply same theme to splash to ensure consistent dark background
-        splash.setStyleSheet(Theme().qss())
+        if theme_obj is not None:
+            splash.setStyleSheet(theme_obj.qss())
     except Exception:
         pass
     splash.show()
@@ -3528,9 +3531,14 @@ def main():
     w = MainWindow()
 
     try:
+        theme_obj = Theme() if callable(Theme) else None
+    except Exception:
+        theme_obj = None
+    try:
         # Reapply theme to main window to avoid any style resets
-        w.setStyleSheet(Theme().qss())
-        w.setAutoFillBackground(True)
+        if theme_obj is not None:
+            w.setStyleSheet(theme_obj.qss())
+            w.setAutoFillBackground(True)
     except Exception:
         pass
 
@@ -3546,7 +3554,7 @@ def main():
     def _wake():
         try:
             w.showNormal()
-            w.setWindowState(w.windowState() & ~QtCore.Qt.WindowMinimized)
+            w.setWindowState(w.windowState() & ~QtCore.Qt.WindowState.WindowMinimized)
             w.raise_()
             w.activateWindow()
         except Exception:
@@ -3566,7 +3574,7 @@ def main():
             pass
         try:
             w.showNormal()
-            w.setWindowState(w.windowState() & ~QtCore.Qt.WindowMinimized)
+            w.setWindowState(w.windowState() & ~QtCore.Qt.WindowState.WindowMinimized)
             w.raise_()
             w.activateWindow()
         except Exception:
@@ -3580,4 +3588,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
