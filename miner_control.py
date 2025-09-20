@@ -3418,15 +3418,10 @@ def main():
         _close_older_gui_instances()
     except Exception:
         pass
-    # Skip SingleInstance gating to allow immediate launch even if another instance is running
-    # Still create a SingleInstance to wire wakeRequested so secondary launches can focus this window.
     try:
         single = SingleInstance(instance_key)
-        try:
-            if single.server.listen(instance_key):
-                single.server.newConnection.connect(single._on_new_connection)
-        except Exception:
-            pass
+        if not single.start_or_signal():
+            return
     except Exception:
         single = None
 
@@ -3467,9 +3462,14 @@ def main():
         global _PRECHECK_OK, _FORCE_UPDATE_REQUIRED
         ex = read_miner_key()
         log_step("prestart: begin", {"have_saved_key": bool(ex)})
-        if ex:
-            try:
-                splash.step('Validating miner key format...', 20)
+        progress_timer = QtCore.QTimer(splash)
+        progress_timer.setInterval(500)
+        progress_timer.timeout.connect(lambda: splash.bar.setValue(min(80, splash.bar.value()+1)))
+        progress_timer.start()
+        try:
+            if ex:
+                try:
+                    splash.step('Validating miner key format...', 20)
                 if not KEY_PATTERN.match(ex):
                     log_step("prestart: saved key bad format", {"key": ex})
                     fry_error(None, 'Miner Key', 'The saved miner_key is invalid. Please relaunch and enter a valid key.')
@@ -3539,6 +3539,11 @@ def main():
                 pass
             _PRECHECK_OK = True
             return True
+        finally:
+            try:
+                progress_timer.stop()
+            except Exception:
+                pass
     ok_gate = _prestart_gate()
     if not ok_gate:
         splash.close()
