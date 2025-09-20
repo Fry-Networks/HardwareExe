@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os, sys, re, json, time, subprocess, platform, socket
 from pathlib import Path
-from typing import List
+from typing import List, Any, cast
 
 import psutil
 import requests
@@ -30,6 +30,8 @@ try:
     from matplotlib.figure import Figure
     HAVE_MPL = True
 except Exception:
+    FigureCanvas = cast(Any, None)
+    Figure = cast(Any, None)
     HAVE_MPL = False
 
 from config_profile import MINER_CODE, VERSION, GROUP, DISPLAY_NAME, METRIC_LABEL, METRIC_UNIT
@@ -57,8 +59,9 @@ def app_dir() -> Path:
     return Path(__file__).resolve().parent
 
 def resource_path(name: str) -> Path:
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / name
+    bundle_root = getattr(sys, "_MEIPASS", None)
+    if getattr(sys, "frozen", False) and isinstance(bundle_root, str):
+        return Path(bundle_root) / name
     return app_dir() / name
 
 def image_path(name: str) -> Path:
@@ -66,8 +69,9 @@ def image_path(name: str) -> Path:
     This supports a transition where images may still be at repo root during migration.
     """
     # Prefer images/<name>
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        p = Path(sys._MEIPASS) / 'images' / name
+    bundle_root = getattr(sys, "_MEIPASS", None) if getattr(sys, "frozen", False) else None
+    if isinstance(bundle_root, str):
+        p = Path(bundle_root) / 'images' / name
     else:
         p = app_dir() / 'images' / name
     if p.exists():
@@ -170,8 +174,9 @@ def miner_icon_path() -> Path:
         base = "frynetworks_logo.png"
     return image_path(base)
 def embedded_path(name: str) -> Path:
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / 'embedded' / name
+    bundle_root = getattr(sys, "_MEIPASS", None)
+    if getattr(sys, "frozen", False) and isinstance(bundle_root, str):
+        return Path(bundle_root) / 'embedded' / name
     return app_dir() / 'embedded' / name
 
 def _parse_sc_qc_binary_path(service_name: str) -> str | None:
@@ -482,6 +487,7 @@ def _collect_start_failure_details(self) -> str:
             'service.exe': f"{exe_path} ({'ok' if exe_path.exists() else 'missing'})",
             'minerkey.txt': f"{(base / 'minerkey.txt')} ({'ok' if (base / 'minerkey.txt').exists() else 'missing'})",
         }
+        parts: list[str] = []
         # Service config via sc qc
         try:
             qc = subprocess.run(["sc","qc", APP_SERVICE_WIN], capture_output=True, text=True)
@@ -631,7 +637,7 @@ def _check_key_concurrency_global(key: str) -> tuple[bool, dict | None]:
             return False, doc.get("conflict") if isinstance(doc, dict) else {"reason": "conflict"}
         return False, doc if doc else {"reason": "error"}
     except Exception:
-        return False, "error"
+        return False, {"reason": "exception"}
 
 def _check_key_version_global(key: str) -> tuple[bool | None, str | None, str | None]:
     try:
@@ -877,7 +883,8 @@ class LogoLabel(QtWidgets.QLabel):
         self._base_pix = pix
         self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         try:
-            self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+            policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
+            self.setSizePolicy(policy)
         except Exception:
             pass
         try:
@@ -1168,7 +1175,8 @@ class MainWindow(QtWidgets.QWidget):
             sLay.addWidget(self.deviceHelp)
             sLay.addSpacing(12)
             try:
-                self.btnApplyMic.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+                policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Fixed)
+                self.btnApplyMic.setSizePolicy(policy)
             except Exception:
                 pass
             sLay.addWidget(self.btnApplyMic)
@@ -1226,7 +1234,8 @@ class MainWindow(QtWidgets.QWidget):
             sLay.addWidget(self.deviceHelp)
             sLay.addSpacing(12)
             try:
-                self.btnApplyGnss.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+                policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Fixed)
+                self.btnApplyGnss.setSizePolicy(policy)
             except Exception:
                 pass
             sLay.addWidget(self.btnApplyGnss)
@@ -1239,7 +1248,8 @@ class MainWindow(QtWidgets.QWidget):
         self.online24Label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
         try:
             self.online24Label.setStyleSheet("font-size: 24px; font-weight: 700;")
-            self.online24Label.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+            policy_label = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
+            self.online24Label.setSizePolicy(policy_label)
             self.online24Label.setMinimumHeight(26)
         except Exception:
             pass
@@ -1249,7 +1259,8 @@ class MainWindow(QtWidgets.QWidget):
             pass
         self.chart=HourlyBar(self)
         try:
-            self.chart.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+            policy_chart = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
+            self.chart.setSizePolicy(policy_chart)
         except Exception:
             pass
         try:
@@ -1320,7 +1331,8 @@ class MainWindow(QtWidgets.QWidget):
         self.btnRestartUpdate.setVisible(False)
         try:
             self.btnRestartUpdate.setStyleSheet('font-weight:600;')
-            self.btnRestartUpdate.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+            policy_restart = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Fixed)
+            self.btnRestartUpdate.setSizePolicy(policy_restart)
         except Exception:
             pass
         try:
@@ -1499,112 +1511,7 @@ class MainWindow(QtWidgets.QWidget):
         # no manual self-check button; refresh automatically
 
         # --- auto-updater ---
-        try:
-            cfg = load_config() or {}
-            repo_s = cfg.get('update_repo')
-            token_cfg = cfg.get('github_token')
-            token_present = isinstance(token_cfg, str) and bool(token_cfg.strip())
-            if token_present and not os.environ.get('GITHUB_TOKEN'):
-                os.environ['GITHUB_TOKEN'] = token_cfg
-            use_github = bool(cfg.get('use_github'))
-            sw_flag_raw = cfg.get('software_uptodate')
-            sw_flag = None
-            if isinstance(sw_flag_raw, str):
-                sw_flag_norm = sw_flag_raw.strip().lower()
-                if sw_flag_norm in ('false','0','no','off'):
-                    sw_flag = False
-                elif sw_flag_norm in ('true','1','yes','on'):
-                    sw_flag = True
-            elif isinstance(sw_flag_raw, bool):
-                sw_flag = sw_flag_raw
-            if sw_flag is None:
-                sw_flag = True
-            force_required = _FORCE_UPDATE_REQUIRED
-            if force_required:
-                sw_flag = False
-            log_step("auto_update: config", {
-                "use_github": use_github,
-                "software_uptodate_raw": sw_flag_raw if sw_flag_raw is not None else None,
-                "software_uptodate_effective": sw_flag,
-                "force_required": force_required,
-                "repo": repo_s or "-",
-                "token_present": token_present,
-            })
-            if sw_flag:
-                log_step("auto_update: skip", {"reason": "already_uptodate"})
-                raise RuntimeError('already_uptodate')
-            if not use_github:
-                log_step("auto_update: skip", {"reason": "updates_disabled"})
-                raise RuntimeError('updates_disabled')
-            owner = repo = None
-            if isinstance(repo_s, str) and '/' in repo_s:
-                parts = repo_s.split('/', 1)
-                owner, repo = parts[0].strip(), parts[1].strip()
-            log_step("auto_update: prepared", {
-                "owner": owner or "default",
-                "repo": repo or "default",
-                "force_required": force_required,
-            })
-            def _on_status(msg: str):
-                try:
-                    msg_text = str(msg or '')
-                    self.updateMsg.setText(msg_text)
-                    log_step("auto_update: status", {"message": msg_text})
-                except Exception:
-                    pass
-            def _on_progress(got: int, total: int | None):
-                try:
-                    if total:
-                        self.updateMsg.setText(f"Downloading update: {got//1024} / {total//1024} KB")
-                    else:
-                        self.updateMsg.setText(f"Downloading update: {got//1024} KB")
-                except Exception:
-                    pass
-            def _on_downloaded(path, ver):
-                try:
-                    self._downloadedUpdatePath = str(getattr(path, 'absolute', lambda: path)()) if hasattr(path,'absolute') else str(path)
-                except Exception:
-                    try:
-                        self._downloadedUpdatePath = str(path)
-                    except Exception:
-                        self._downloadedUpdatePath = ''
-                try:
-                    display_name = getattr(path, 'name', str(path))
-                    self.updateMsg.setText(f"Update {ver} downloaded: {display_name}")
-                    log_step("auto_update: downloaded", {
-                        "version": ver,
-                        "path": self._downloadedUpdatePath or str(path),
-                    })
-                    if self._downloadedUpdatePath:
-                        self.btnRestartUpdate.setVisible(True)
-                except Exception:
-                    pass
-            try:
-                interval_env = os.environ.get('FRY_UPDATE_INTERVAL_SEC')
-                interval_sec = int(interval_env) if interval_env and interval_env.isdigit() else None
-            except Exception:
-                interval_sec = None
-            log_step("auto_update: starting", {
-                "interval_sec": interval_sec or "default",
-                "owner": owner or "default",
-                "repo": repo or "default",
-            })
-            self.updater = GuiAutoUpdater(MINER_CODE, VERSION, owner=owner, repo=repo,
-                                          interval_sec=interval_sec,
-                                          on_status=_on_status,
-                                          on_progress=_on_progress,
-                                          on_downloaded=_on_downloaded)
-            self.updater.start()
-            log_step("auto_update: started", {
-                "interval_sec": getattr(self.updater, 'interval_sec', interval_sec or "default"),
-                "owner": owner or "default",
-                "repo": repo or "default",
-            })
-        except Exception as e:
-            log_step("auto_update: init failed", {
-                "error": str(e),
-            })
-            pass
+        self._init_auto_update(reason="initial")
 
         # Start periodic version monitor to surface backend requirement changes
         try:
@@ -1914,6 +1821,163 @@ class MainWindow(QtWidgets.QWidget):
         except Exception:
             return None, None, None
 
+    def _init_auto_update(self, *, reason: str = "initial") -> None:
+        global _FORCE_UPDATE_REQUIRED
+        try:
+            cfg = load_config() or {}
+            repo_s = cfg.get('update_repo')
+            token_cfg = cfg.get('github_token')
+            token_present = isinstance(token_cfg, str) and bool(token_cfg.strip())
+            if token_present and not os.environ.get('GITHUB_TOKEN'):
+                os.environ['GITHUB_TOKEN'] = token_cfg
+            use_github = bool(cfg.get('use_github'))
+            sw_flag_raw = cfg.get('software_uptodate')
+            sw_flag = None
+            if isinstance(sw_flag_raw, str):
+                sw_flag_norm = sw_flag_raw.strip().lower()
+                if sw_flag_norm in ('false', '0', 'no', 'off'):
+                    sw_flag = False
+                elif sw_flag_norm in ('true', '1', 'yes', 'on'):
+                    sw_flag = True
+            elif isinstance(sw_flag_raw, bool):
+                sw_flag = sw_flag_raw
+            if sw_flag is None:
+                sw_flag = True
+            force_required = bool(_FORCE_UPDATE_REQUIRED)
+            if force_required:
+                sw_flag = False
+            log_step("auto_update: config", {
+                "use_github": use_github,
+                "software_uptodate_raw": sw_flag_raw if sw_flag_raw is not None else None,
+                "software_uptodate_effective": sw_flag,
+                "force_required": force_required,
+                "repo": repo_s or "-",
+                "token_present": token_present,
+                "context": reason,
+            })
+            if sw_flag:
+                log_step("auto_update: skip", {"reason": "already_uptodate", "context": reason})
+                return
+            if not use_github:
+                log_step("auto_update: skip", {"reason": "updates_disabled", "context": reason})
+                return
+            owner = repo = None
+            if isinstance(repo_s, str) and '/' in repo_s:
+                parts = repo_s.split('/', 1)
+                owner, repo = parts[0].strip(), parts[1].strip()
+            log_step("auto_update: prepared", {
+                "owner": owner or "default",
+                "repo": repo or "default",
+                "force_required": force_required,
+                "context": reason,
+            })
+
+            if getattr(self, 'updater', None):
+                log_step("auto_update: reuse", {
+                    "owner": owner or "default",
+                    "repo": repo or "default",
+                    "context": reason,
+                })
+                try:
+                    if hasattr(self.updater, 'check_now'):
+                        QtCore.QTimer.singleShot(0, lambda: self.updater.check_now(download_if_newer=True))
+                except Exception:
+                    pass
+                return
+
+            def _on_status(msg: str):
+                try:
+                    msg_text = str(msg or '')
+                    self.updateMsg.setText(msg_text)
+                    log_step("auto_update: status", {"message": msg_text, "context": reason})
+                except Exception:
+                    pass
+
+            def _on_progress(got: int, total: int | None):
+                try:
+                    if total:
+                        self.updateMsg.setText(f"Downloading update: {got//1024} / {total//1024} KB")
+                    else:
+                        self.updateMsg.setText(f"Downloading update: {got//1024} KB")
+                except Exception:
+                    pass
+
+            def _on_downloaded(path, ver):
+                try:
+                    self._downloadedUpdatePath = str(getattr(path, 'absolute', lambda: path)()) if hasattr(path, 'absolute') else str(path)
+                except Exception:
+                    try:
+                        self._downloadedUpdatePath = str(path)
+                    except Exception:
+                        self._downloadedUpdatePath = ''
+                try:
+                    display_name = getattr(path, 'name', str(path))
+                    self.updateMsg.setText(f"Update {ver} downloaded: {display_name}")
+                    log_step("auto_update: downloaded", {
+                        "version": ver,
+                        "path": self._downloadedUpdatePath or str(path),
+                        "context": reason,
+                    })
+                    if self._downloadedUpdatePath:
+                        self.btnRestartUpdate.setVisible(True)
+                except Exception:
+                    pass
+
+            try:
+                interval_env = os.environ.get('FRY_UPDATE_INTERVAL_SEC')
+                interval_sec = int(interval_env) if interval_env and interval_env.isdigit() else None
+            except Exception:
+                interval_sec = None
+            log_step("auto_update: starting", {
+                "interval_sec": interval_sec or "default",
+                "owner": owner or "default",
+                "repo": repo or "default",
+                "context": reason,
+            })
+            self.updater = GuiAutoUpdater(MINER_CODE, VERSION, owner=owner, repo=repo,
+                                          interval_sec=interval_sec,
+                                          on_status=_on_status,
+                                          on_progress=_on_progress,
+                                          on_downloaded=_on_downloaded)
+            self.updater.start()
+            log_step("auto_update: started", {
+                "interval_sec": getattr(self.updater, 'interval_sec', interval_sec or "default"),
+                "owner": owner or "default",
+                "repo": repo or "default",
+                "context": reason,
+            })
+            try:
+                if reason != "initial" and hasattr(self.updater, 'check_now'):
+                    QtCore.QTimer.singleShot(0, lambda: self.updater.check_now(download_if_newer=True))
+            except Exception:
+                pass
+        except Exception as e:
+            log_step("auto_update: init failed", {
+                "error": str(e),
+                "context": reason,
+            })
+            pass
+
+    def _on_restart_update(self):
+        path = getattr(self, '_downloadedUpdatePath', '') or ''
+        if path and os.path.exists(path):
+            log_step('auto_update: restart', {'path': path})
+            try:
+                if sys.platform.startswith('win'):
+                    os.startfile(path)
+                elif sys.platform.startswith('darwin'):
+                    subprocess.Popen(['open', path])
+                else:
+                    subprocess.Popen(['xdg-open', path])
+            except Exception as exc:
+                safe_msg = f'Failed to launch update: {exc}'
+                log_step('auto_update: restart failed', {'error': safe_msg})
+                fry_error(self, 'Update', safe_msg)
+                return
+            QtWidgets.QApplication.quit()
+        else:
+            fry_warn(self, 'Update', 'Update package is no longer available. Please check for updates again.')
+``
     def _start_version_monitor(self):
         try:
             # Remember last seen requirement to only notify on change
@@ -1946,6 +2010,7 @@ class MainWindow(QtWidgets.QWidget):
 
     def _poll_required_version(self):
         try:
+            global _FORCE_UPDATE_REQUIRED
             # Obtain current miner key from UI or disk
             key = ''
             try:
@@ -1981,12 +2046,27 @@ class MainWindow(QtWidgets.QWidget):
                             self.noticeMsg.setVisible(True)
                         except Exception:
                             pass
+                        if not _FORCE_UPDATE_REQUIRED:
+                            _FORCE_UPDATE_REQUIRED = True
+                            log_step("auto_update: force", {"needed": needed, "installed": installed, "context": "version_monitor"})
+                            try:
+                                self._init_auto_update(reason="version_monitor")
+                            except Exception:
+                                pass
+                        elif not getattr(self, 'updater', None):
+                            try:
+                                self._init_auto_update(reason="version_monitor")
+                            except Exception:
+                                pass
                     else:
                         # Clear message when no longer outdated
                         try:
                             self.noticeMsg.clear(); self.noticeMsg.setVisible(False)
                         except Exception:
                             pass
+                        if _FORCE_UPDATE_REQUIRED:
+                            _FORCE_UPDATE_REQUIRED = False
+                            log_step("auto_update: force_cleared", {"needed": needed, "installed": installed, "context": "version_monitor"})
                 except Exception:
                     pass
         except Exception:
@@ -3214,25 +3294,6 @@ def open_today_cache():
     except Exception as e:
         QtWidgets.QMessageBox.warning(None, "Cache", f"Failed to open cache: {e}")
 
-def ensure_admin_windows() -> bool:
-    if not sys.platform.startswith('win'):
-        return True
-    try:
-        import ctypes
-        return bool(ctypes.windll.shell32.IsUserAnAdmin())
-    except Exception:
-        return False
-
-def relaunch_as_admin():
-    if not sys.platform.startswith('win'):
-        return False
-    try:
-        import ctypes
-        params = ' '.join([f'"{p}"' for p in sys.argv])
-        ret = ctypes.windll.shell32.ShellExecuteW(None, 'runas', sys.executable, params, None, 1)
-        return ret > 32
-    except Exception:
-        return False
 
 def main():
     class StartupScreen(QtWidgets.QDialog):
@@ -3519,6 +3580,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
 
