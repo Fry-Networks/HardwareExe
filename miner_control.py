@@ -1503,7 +1503,8 @@ class MainWindow(QtWidgets.QWidget):
             cfg = load_config() or {}
             repo_s = cfg.get('update_repo')
             token_cfg = cfg.get('github_token')
-            if isinstance(token_cfg, str) and token_cfg and not os.environ.get('GITHUB_TOKEN'):
+            token_present = isinstance(token_cfg, str) and bool(token_cfg.strip())
+            if token_present and not os.environ.get('GITHUB_TOKEN'):
                 os.environ['GITHUB_TOKEN'] = token_cfg
             use_github = bool(cfg.get('use_github'))
             sw_flag_raw = cfg.get('software_uptodate')
@@ -1518,19 +1519,37 @@ class MainWindow(QtWidgets.QWidget):
                 sw_flag = sw_flag_raw
             if sw_flag is None:
                 sw_flag = True
-            if _FORCE_UPDATE_REQUIRED:
+            force_required = _FORCE_UPDATE_REQUIRED
+            if force_required:
                 sw_flag = False
+            log_step("auto_update: config", {
+                "use_github": use_github,
+                "software_uptodate_raw": sw_flag_raw if sw_flag_raw is not None else None,
+                "software_uptodate_effective": sw_flag,
+                "force_required": force_required,
+                "repo": repo_s or "-",
+                "token_present": token_present,
+            })
             if sw_flag:
+                log_step("auto_update: skip", {"reason": "already_uptodate"})
                 raise RuntimeError('already_uptodate')
             if not use_github:
+                log_step("auto_update: skip", {"reason": "updates_disabled"})
                 raise RuntimeError('updates_disabled')
             owner = repo = None
             if isinstance(repo_s, str) and '/' in repo_s:
                 parts = repo_s.split('/', 1)
                 owner, repo = parts[0].strip(), parts[1].strip()
+            log_step("auto_update: prepared", {
+                "owner": owner or "default",
+                "repo": repo or "default",
+                "force_required": force_required,
+            })
             def _on_status(msg: str):
                 try:
-                    self.updateMsg.setText(str(msg or ''))
+                    msg_text = str(msg or '')
+                    self.updateMsg.setText(msg_text)
+                    log_step("auto_update: status", {"message": msg_text})
                 except Exception:
                     pass
             def _on_progress(got: int, total: int | None):
@@ -1550,7 +1569,12 @@ class MainWindow(QtWidgets.QWidget):
                     except Exception:
                         self._downloadedUpdatePath = ''
                 try:
-                    self.updateMsg.setText(f"Update {ver} downloaded: {getattr(path,'name',str(path))}")
+                    display_name = getattr(path, 'name', str(path))
+                    self.updateMsg.setText(f"Update {ver} downloaded: {display_name}")
+                    log_step("auto_update: downloaded", {
+                        "version": ver,
+                        "path": self._downloadedUpdatePath or str(path),
+                    })
                     if self._downloadedUpdatePath:
                         self.btnRestartUpdate.setVisible(True)
                 except Exception:
@@ -1560,13 +1584,26 @@ class MainWindow(QtWidgets.QWidget):
                 interval_sec = int(interval_env) if interval_env and interval_env.isdigit() else None
             except Exception:
                 interval_sec = None
+            log_step("auto_update: starting", {
+                "interval_sec": interval_sec or "default",
+                "owner": owner or "default",
+                "repo": repo or "default",
+            })
             self.updater = GuiAutoUpdater(MINER_CODE, VERSION, owner=owner, repo=repo,
                                           interval_sec=interval_sec,
                                           on_status=_on_status,
                                           on_progress=_on_progress,
                                           on_downloaded=_on_downloaded)
             self.updater.start()
-        except Exception:
+            log_step("auto_update: started", {
+                "interval_sec": getattr(self.updater, 'interval_sec', interval_sec or "default"),
+                "owner": owner or "default",
+                "repo": repo or "default",
+            })
+        except Exception as e:
+            log_step("auto_update: init failed", {
+                "error": str(e),
+            })
             pass
 
         # Start periodic version monitor to surface backend requirement changes
