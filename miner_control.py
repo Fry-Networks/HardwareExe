@@ -595,17 +595,49 @@ def ask_miner_key(parent) -> tuple[str, bool]:
             pass
         try:
             edit = dlg.findChild(QtWidgets.QLineEdit)
+            button_box = dlg.findChild(QtWidgets.QDialogButtonBox)
+            ok_btn = button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Ok) if button_box else None
+            warning_lbl = QtWidgets.QLabel('!', dlg)
+            warning_lbl.setStyleSheet('color: #ffb300; font-weight: bold; margin-top: 6px;')
+            warning_lbl.setToolTip(f'Expected format: {MINER_CODE}-[A-Z0-9]{{32}}')
+            warning_lbl.setVisible(False)
+            layout = dlg.layout()
+            if layout is not None:
+                layout.addWidget(warning_lbl)
+            if ok_btn is not None:
+                ok_btn.setEnabled(False)
             if edit is not None:
                 edit.setPlaceholderText(f"{MINER_CODE}-[A-Z0-9]{{32}}")
                 edit.setMinimumWidth(540)
+                def _update_state(value: str) -> None:
+                    if edit is None:
+                        return
+                    normalized = value.upper()
+                    if normalized != value:
+                        cursor = edit.cursorPosition()
+                        edit.blockSignals(True)
+                        edit.setText(normalized)
+                        edit.setCursorPosition(min(cursor, len(normalized)))
+                        edit.blockSignals(False)
+                        value_local = normalized
+                    else:
+                        value_local = value
+                    stripped = value_local.strip()
+                    is_valid = bool(KEY_PATTERN.fullmatch(stripped))
+                    if ok_btn is not None:
+                        ok_btn.setEnabled(is_valid)
+                    if warning_lbl is not None:
+                        warning_lbl.setVisible(bool(stripped) and not is_valid)
+                edit.textChanged.connect(_update_state)
+                _update_state(edit.text())
         except Exception:
             pass
         ok = (dlg.exec() == QtWidgets.QDialog.DialogCode.Accepted)
-        return dlg.textValue().strip(), ok
+        return dlg.textValue().strip().upper(), ok
     except Exception:
         # Fallback to basic getText if custom dialog fails
         text, ok = QtWidgets.QInputDialog.getText(parent, 'Miner Key', f'Enter miner_key for {DISPLAY_NAME}:')
-        return (text or '').strip(), bool(ok)
+        return (text or '').strip().upper(), bool(ok)
 
 # --- pre-start key validation helpers (module-level) ---
 def _check_key_exists_global(key: str) -> bool:
@@ -1532,7 +1564,27 @@ class MainWindow(QtWidgets.QWidget):
         # no manual self-check button; refresh automatically
 
         # --- auto-updater ---
-        self._init_auto_update(reason="initial")
+        should_init_update = bool(_FORCE_UPDATE_REQUIRED)
+        if not should_init_update:
+            try:
+                cfg = load_config() or {}
+                sw_flag_raw = cfg.get('software_uptodate')
+                sw_flag = None
+                if isinstance(sw_flag_raw, bool):
+                    sw_flag = sw_flag_raw
+                elif isinstance(sw_flag_raw, str):
+                    sw_flag_norm = sw_flag_raw.strip().lower()
+                    if sw_flag_norm in ('false', '0', 'no', 'off'):
+                        sw_flag = False
+                    elif sw_flag_norm in ('true', '1', 'yes', 'on'):
+                        sw_flag = True
+                should_init_update = (sw_flag is False)
+            except Exception:
+                should_init_update = False
+        if should_init_update:
+            self._init_auto_update(reason="initial")
+        else:
+            log_step('auto_update: deferred', {'reason': 'startup_skip', 'context': 'initial'})
 
         # Start periodic version monitor to surface backend requirement changes
         try:
@@ -3470,36 +3522,39 @@ def main():
             if ex:
                 try:
                     splash.step('Validating miner key format...', 20)
-                if not KEY_PATTERN.match(ex):
-                    log_step("prestart: saved key bad format", {"key": ex})
-                    fry_error(None, 'Miner Key', 'The saved miner_key is invalid. Please relaunch and enter a valid key.')
+                    if not KEY_PATTERN.match(ex):
+                        log_step("prestart: saved key bad format", {"key": ex})
+                        fry_error(None, 'Miner Key', 'The saved miner_key is invalid. Please relaunch and enter a valid key.')
+                        return False
+                    splash.step('Checking key validity...', 35)
+                    if not _check_key_exists_global(ex):
+                        log_step("prestart: saved key not found", {"key": ex})
+                        fry_error(None, 'Miner Key', 'The saved miner_key was not found. Please relaunch and enter a valid key.')
+                        return False
+                    splash.step('Global cross-checking...', 55)
+                    ok, det = _check_key_concurrency_global(ex)
+                    log_step("prestart: concurrency(saved)", {"ok": ok, "details": det})
+                    if not ok:
+                        if isinstance(det, dict) and det:
+                            fry_error(None, 'Miner Key', _in_use_message(ex, _format_conflict_details(det)))
+                        else:
+                            fry_error(None, 'Miner Key', 'Could not verify miner_key status (network/database error). Please check your connection and try again.')
+                        return False
+                    # Non-blocking update warning
+                    splash.step('Version check...', 70)
+                    vok, needed, installed = _check_key_version_global(ex)
+                    log_step("prestart: version(saved)", {"ok": vok, "needed": needed, "installed": installed})
+                    if vok is False and (needed or installed):
+                        _FORCE_UPDATE_REQUIRED = True
+                        fry_warn(None, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
+                    _PRECHECK_OK = True
+                    return True
+                except Exception:
+                    fry_error(None, 'Miner Key', 'An error occurred validating the miner_key. Please try again.')
                     return False
-                splash.step('Checking key validity...', 35)
-                if not _check_key_exists_global(ex):
-                    log_step("prestart: saved key not found", {"key": ex})
-                    fry_error(None, 'Miner Key', 'The saved miner_key was not found. Please relaunch and enter a valid key.')
-                    return False
-                splash.step('Global cross-checking...', 55)
-                ok, det = _check_key_concurrency_global(ex)
-                log_step("prestart: concurrency(saved)", {"ok": ok, "details": det})
-                if not ok:
-                    if isinstance(det, dict) and det:
-                        fry_error(None, 'Miner Key', _in_use_message(ex, _format_conflict_details(det)))
-                    else:
-                        fry_error(None, 'Miner Key', 'Could not verify miner_key status (network/database error). Please check your connection and try again.')
-                    return False
-                # Non-blocking update warning
-                splash.step('Version check...', 70)
-                vok, needed, installed = _check_key_version_global(ex)
-                log_step("prestart: version(saved)", {"ok": vok, "needed": needed, "installed": installed})
-                if vok is False and (needed or installed):
-                    _FORCE_UPDATE_REQUIRED = True
-                    fry_warn(None, 'Update Recommended', f'This device requires version {needed}, but you have {installed}. A new FryNetworks miner is rolling out shortly; please keep this device online for the update.')
-                _PRECHECK_OK = True
-                return True
-            except Exception:
-                fry_error(None, 'Miner Key', 'An error occurred validating the miner_key. Please try again.')
-                return False
+        except Exception:
+            fry_error(None, 'Miner Key', 'An error occurred validating the miner_key. Please try again.')
+            return False
         else:
             key, ok = ask_miner_key(splash)
             log_step("prestart: prompt key", {"ok": bool(ok), "len": len(key or '')})
