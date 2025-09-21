@@ -28,6 +28,18 @@ function Test-GitCleanTree {
   }
 }
 
+function Test-GhReleaseExists {
+  param([Parameter(Mandatory=$true)][string]$ReleaseName)
+  try {
+    gh release view $ReleaseName --json name *> $null
+    return ($LASTEXITCODE -eq 0)
+  } catch {
+    return $false
+  } finally {
+    if ($LASTEXITCODE -ne 0) { $global:LASTEXITCODE = 0 }
+  }
+}
+
 # --- Basic checks ---
 git rev-parse --is-inside-work-tree 2>$null | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "Not in a git repo." }
@@ -61,12 +73,7 @@ git tag -f $Tag $VersionTagName
 git push $Remote -f $Tag
 
 # --- Ensure release exists for version tag ---
-$versionReleaseExists = $false
-gh release view $VersionTagName 2>$null | Out-Null
-if ($LASTEXITCODE -eq 0) {
-  $versionReleaseExists = $true
-}
-
+$versionReleaseExists = Test-GhReleaseExists -ReleaseName $VersionTagName
 if ($versionReleaseExists) {
   gh release edit $VersionTagName --title "$VersionReleaseTitle" --notes "Release $VersionReleaseTitle"
 } else {
@@ -74,12 +81,7 @@ if ($versionReleaseExists) {
 }
 
 # --- Ensure Release exists for moving tag and set title/notes ---
-$releaseExists = $false
-gh release view $Tag 2>$null | Out-Null
-if ($LASTEXITCODE -eq 0) {
-  $releaseExists = $true
-}
-
+$releaseExists = Test-GhReleaseExists -ReleaseName $Tag
 $movingReleaseNotes = "Latest $Tag release: $Version"
 if ($releaseExists) {
   gh release edit $Tag --title "$Tag" --notes "$movingReleaseNotes"
