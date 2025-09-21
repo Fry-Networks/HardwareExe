@@ -4,7 +4,7 @@
 a = Analysis(
     ['C:\\Users\\jimbo\\Documents\\GitHub\\DevTesting\\HardwareExe\\miner_control.py'],
     pathex=[],
-    binaries=[('C:\\Users\\jimbo\\Documents\\GitHub\\DevTesting\\HardwareExe\\dist\\FRY_PoC_BM_v5.1.1.exe', 'embedded'), ('C:\\Users\\jimbo\\Documents\\GitHub\\DevTesting\\HardwareExe\\nssm.exe', 'embedded')],
+    binaries=[('C:\\Users\\jimbo\\Documents\\GitHub\\DevTesting\\HardwareExe\\dist\\FRY_PoC_BM_v5.1.3.exe', 'embedded'), ('C:\\Users\\jimbo\\Documents\\GitHub\\DevTesting\\HardwareExe\\nssm.exe', 'embedded')],
     datas=[('C:\\Users\\jimbo\\Documents\\GitHub\\DevTesting\\HardwareExe\\images', 'images'), ('C:\\Users\\jimbo\\Documents\\GitHub\\DevTesting\\HardwareExe\\qt.conf', '.'), ('C:\\Users\\jimbo\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PySide6\\plugins\\imageformats\\\\qjpeg.dll', 'PySide6/plugins/imageformats'), ('C:\\Users\\jimbo\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\PySide6\\plugins\\imageformats\\\\qico.dll', 'PySide6/plugins/imageformats')],
     hiddenimports=['PySide6.QtNetwork', 'LiveData'],
     hookspath=[],
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='FRY_BM_v5.1.1',
+    name='FRY_BM_v5.1.3',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

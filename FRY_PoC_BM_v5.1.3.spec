@@ -33,7 +33,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='FRY_PoC_BM_v5.1.1',
+    name='FRY_PoC_BM_v5.1.3',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

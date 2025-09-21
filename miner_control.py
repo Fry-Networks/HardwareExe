@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 import os, sys, re, json, time, subprocess, platform, socket
 from pathlib import Path
 from typing import List, Any, Optional, Sequence, cast
@@ -598,11 +598,16 @@ def ask_miner_key(parent) -> tuple[str, bool]:
             button_box = dlg.findChild(QtWidgets.QDialogButtonBox)
             ok_btn = button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Ok) if button_box else None
             warning_lbl = QtWidgets.QLabel('!', dlg)
-            warning_lbl.setStyleSheet('color: #ffb300; font-weight: bold; margin-top: 6px;')
+            warning_lbl.setStyleSheet('color: #ffb300; font-weight: bold; margin-top: 4px;')
             warning_lbl.setToolTip(f'Expected format: {MINER_CODE}-[A-Z0-9]{{32}}')
             warning_lbl.setVisible(False)
             layout = dlg.layout()
-            if layout is not None:
+            if layout is not None and edit is not None:
+                try:
+                    layout.removeWidget(edit)
+                except Exception:
+                    pass
+                layout.addWidget(edit)
                 layout.addWidget(warning_lbl)
             if ok_btn is not None:
                 ok_btn.setEnabled(False)
@@ -625,7 +630,7 @@ def ask_miner_key(parent) -> tuple[str, bool]:
                     stripped = value_local.strip()
                     is_valid = bool(KEY_PATTERN.fullmatch(stripped))
                     if ok_btn is not None:
-                        ok_btn.setEnabled(is_valid)
+                        ok_btn.setEnabled(is_valid and bool(stripped))
                     if warning_lbl is not None:
                         warning_lbl.setVisible(bool(stripped) and not is_valid)
                 edit.textChanged.connect(_update_state)
@@ -3514,10 +3519,6 @@ def main():
         global _PRECHECK_OK, _FORCE_UPDATE_REQUIRED
         ex = read_miner_key()
         log_step("prestart: begin", {"have_saved_key": bool(ex)})
-        progress_timer = QtCore.QTimer(splash)
-        progress_timer.setInterval(500)
-        progress_timer.timeout.connect(lambda: splash.bar.setValue(min(80, splash.bar.value()+1)))
-        progress_timer.start()
         try:
             if ex:
                 try:
@@ -3595,10 +3596,7 @@ def main():
             _PRECHECK_OK = True
             return True
         finally:
-            try:
-                progress_timer.stop()
-            except Exception:
-                pass
+            pass
     ok_gate = _prestart_gate()
     if not ok_gate:
         splash.close()
