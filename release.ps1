@@ -145,11 +145,27 @@ if ($ArtifactPath) {
 
 # --- Upload chosen artifact (if any) ---
 if ($ChosenArtifact) {
-  gh release upload $VersionTagName $ChosenArtifact --clobber --name $VersionAssetName
-  Write-Host "Uploaded to ${VersionTagName}: $VersionAssetName"
+  $desiredName = $VersionAssetName
+  $currentName = [System.IO.Path]::GetFileName($ChosenArtifact)
+  $uploadPath = $ChosenArtifact
+  $tempDir = $null
+  if ($currentName -ne $desiredName) {
+    $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("release-upload-" + [System.Guid]::NewGuid().ToString())
+    New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+    $uploadPath = Join-Path $tempDir $desiredName
+    Copy-Item -Path $ChosenArtifact -Destination $uploadPath -Force
+  }
+  try {
+    gh release upload $VersionTagName $uploadPath --clobber
+    Write-Host "Uploaded to ${VersionTagName}: $desiredName"
 
-  gh release upload $Tag $ChosenArtifact --clobber --name $VersionAssetName
-  Write-Host "Uploaded to ${Tag}: $VersionAssetName"
+    gh release upload $Tag $uploadPath --clobber
+    Write-Host "Uploaded to ${Tag}: $desiredName"
+  } finally {
+    if ($tempDir -and (Test-Path $tempDir)) {
+      try { Remove-Item -Path $tempDir -Force -Recurse -ErrorAction SilentlyContinue } catch {}
+    }
+  }
 } else {
   Write-Warning "No artifact uploaded."
 }
