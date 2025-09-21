@@ -93,21 +93,24 @@ if ($releaseExists) {
 $cleanupPattern = "^FRY-" + [regex]::Escape($Tag) + "-.*\.exe$"
 $existingAssets = @()
 try {
-  $existingAssets = gh release view $Tag --json assets --jq '.assets[].name'
-} catch {
-  Write-Warning "Unable to list existing assets for ${Tag}: $($_.Exception.Message)"
-}
-if ($existingAssets) {
-  foreach ($asset in $existingAssets) {
-    if ($asset -match $cleanupPattern) {
-      try {
-        gh release delete-asset $Tag $asset --yes | Out-Null
-        Write-Host "Removed old asset: $asset"
-      } catch {
-        Write-Warning "Failed to remove asset '$asset': $($_.Exception.Message)"
+  $assetsJson = gh release view $Tag --json assets 2>$null
+  if ($assetsJson) {
+    $existingAssets = ($assetsJson | ConvertFrom-Json).assets
+    foreach ($asset in $existingAssets) {
+      $name = $asset.name
+      $asset_id = $asset.id
+      if ($name -match $cleanupPattern -and $name -ne $VersionAssetName) {
+        try {
+          gh release delete-asset $Tag $asset_id --yes | Out-Null
+          Write-Host "Removed old asset: $name"
+        } catch {
+          Write-Warning "Failed to remove asset '$name': $($_.Exception.Message)"
+        }
       }
     }
   }
+} catch {
+  Write-Warning "Unable to list existing assets for ${Tag}: $($_.Exception.Message)"
 }
 
 # --- Select artifact: explicit path OR auto-discover newest exe (excluding FRY_PoC*.exe) ---
