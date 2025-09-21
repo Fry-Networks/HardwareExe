@@ -16,7 +16,11 @@ Param(
 
 $ErrorActionPreference = "Stop"
 
-function Ensure-CleanTree {
+$VersionTagName = "$Tag-v$Version"
+$VersionReleaseTitle = "$Tag - $Version"
+$VersionAssetName = "FRY-$Tag-v$Version.exe"
+
+function Test-GitCleanTree {
   $wd = git diff --name-only
   $idx = git diff --cached --name-only
   if ($wd -or $idx) {
@@ -25,50 +29,66 @@ function Ensure-CleanTree {
 }
 
 # --- Basic checks ---
-git rev-parse --is-inside-work-tree *> $null | Out-Null
-if (-not $?) { throw "Not in a git repo." }
+git rev-parse --is-inside-work-tree 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "Not in a git repo." }
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
   throw "GitHub CLI 'gh' not found. Install and run 'gh auth login'."
 }
 
-Ensure-CleanTree
+Test-GitCleanTree
 
 # --- Save old pointer for rollback ---
 $OldPointer = $null
-if (git rev-parse -q --verify "refs/tags/$Tag" *> $null) {
+git rev-parse -q --verify "refs/tags/$Tag" 2>$null | Out-Null
+if ($LASTEXITCODE -eq 0) {
   $OldPointer = (git rev-parse -q --verify $Tag)
-  Write-Host "Old $Tag -> $OldPointer"
+  Write-Host "Old $Tag now points to $OldPointer"
 }
 
-# --- Ensure version tag doesn't exist ---
-if (git rev-parse -q --verify "refs/tags/$Version" *> $null) {
-  throw "Tag $Version already exists. Choose a new version or delete it first."
+# --- Ensure version tag does not exist ---
+git rev-parse -q --verify "refs/tags/$VersionTagName" 2>$null | Out-Null
+if ($LASTEXITCODE -eq 0) {
+  throw "Tag $VersionTagName already exists. Choose a new version or delete it first."
 }
 
 # --- Create & push the immutable version tag on HEAD ---
-git tag -a $Version -m "Release $Version"
-git push $Remote $Version
+git tag -a $VersionTagName -m "Release $VersionReleaseTitle"
+git push $Remote $VersionTagName
 
 # --- Move & push the moving tag ---
-git tag -f $Tag $Version
+git tag -f $Tag $VersionTagName
 git push $Remote -f $Tag
 
-# --- Ensure Release exists for $Tag and set title/notes to $Version ---
+# --- Ensure release exists for version tag ---
+$versionReleaseExists = $false
+gh release view $VersionTagName 2>$null | Out-Null
+if ($LASTEXITCODE -eq 0) {
+  $versionReleaseExists = $true
+}
+
+if ($versionReleaseExists) {
+  gh release edit $VersionTagName --title "$VersionReleaseTitle" --notes "Release $VersionReleaseTitle"
+} else {
+  gh release create $VersionTagName --title "$VersionReleaseTitle" --notes "Release $VersionReleaseTitle"
+}
+
+# --- Ensure Release exists for moving tag and set title/notes ---
 $releaseExists = $false
-gh release view $Tag *> $null
+gh release view $Tag 2>$null | Out-Null
 if ($LASTEXITCODE -eq 0) {
   $releaseExists = $true
 }
 
+$movingReleaseNotes = "Latest $Tag release: $Version"
 if ($releaseExists) {
-  gh release edit $Tag --title "$Version" --notes "Release $Version"
+  gh release edit $Tag --title "$Tag" --notes "$movingReleaseNotes"
 } else {
-  gh release create $Tag --title "$Version" --notes "Release $Version"
+  gh release create $Tag --title "$Tag" --notes "$movingReleaseNotes"
 }
 
 # --- Remove previous executables for this moving tag so auto-update only grabs the latest build ---
-$cleanupPattern = "^FRY_" + [regex]::Escape($Tag) + "_.+\.exe$"
+$cleanupPattern = "^FRY-" + [regex]::Escape($Tag) + "-.*\.exe$"
 $existingAssets = @()
 try {
   $existingAssets = gh release view $Tag --json assets --jq '.assets[].name'
@@ -109,8 +129,11 @@ if ($ArtifactPath) {
       $ChosenArtifact = $Candidates[0].FullName
       Write-Host "Auto-selected newest artifact: $ChosenArtifact"
       if ($Candidates.Count -gt 1) {
-        Write-Host "Other candidates (newest → oldest, excluded shown separately if any):"
-        $Candidates[1..([Math]::Min($Candidates.Count-1,4))] | ForEach-Object { " - " + $_.FullName } | Write-Output
+        Write-Host "Other candidates (newest to oldest, excluded shown separately if any):"
+        $tailLimit = [Math]::Min($Candidates.Count - 1, 4)
+        if ($tailLimit -gt 0) {
+          $Candidates[1..$tailLimit] | ForEach-Object { " - " + $_.FullName } | Write-Output
+        }
       }
     } else {
       Write-Warning "No matching artifacts found in '$BuildDir' (Include='$IncludeGlob', Exclude='$ExcludeRegex'). Skipping upload."
@@ -120,22 +143,25 @@ if ($ArtifactPath) {
 
 # --- Upload chosen artifact (if any) ---
 if ($ChosenArtifact) {
-  gh release upload $Tag $ChosenArtifact --clobber
-  Write-Host "✅ Uploaded: $ChosenArtifact"
+  gh release upload $VersionTagName $ChosenArtifact --clobber --name $VersionAssetName
+  Write-Host "Uploaded to ${VersionTagName}: $VersionAssetName"
+
+  gh release upload $Tag $ChosenArtifact --clobber --name $VersionAssetName
+  Write-Host "Uploaded to ${Tag}: $VersionAssetName"
 } else {
   Write-Warning "No artifact uploaded."
 }
 
 @"
-✅ Done!
+Done!
 
-Created version tag:   $Version
-Updated moving tag:    $Tag -> $Version
+Created version tag:   $VersionTagName
+Updated moving tag:    $Tag now points to $VersionTagName
 Remote:                $Remote
-Release updated:       $Tag (title: $Version)
+Version release:       $VersionTagName (title: $VersionReleaseTitle)
+Moving release:        $Tag (latest asset: $VersionAssetName)
 
 Rollback:
   git tag -f $Tag $OldPointer
   git push $Remote -f $Tag
 "@ | Write-Output
-
