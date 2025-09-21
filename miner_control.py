@@ -596,19 +596,37 @@ def ask_miner_key(parent) -> tuple[str, bool]:
         try:
             edit = dlg.findChild(QtWidgets.QLineEdit)
             button_box = dlg.findChild(QtWidgets.QDialogButtonBox)
-            ok_btn = button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Ok) if button_box else None
+            ok_btn = None
+            if button_box is not None:
+                try:
+                    ok_btn = button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+                except Exception:
+                    ok_btn = None
+            if ok_btn is None:
+                for _btn in dlg.findChildren(QtWidgets.QPushButton):
+                    try:
+                        if _btn.text().strip().lower().startswith('ok'):
+                            ok_btn = _btn
+                            break
+                    except Exception:
+                        continue
             warning_lbl = QtWidgets.QLabel('!', dlg)
             warning_lbl.setStyleSheet('color: #ffb300; font-weight: bold; margin-top: 4px;')
             warning_lbl.setToolTip(f'Expected format: {MINER_CODE}-[A-Z0-9]{{32}}')
             warning_lbl.setVisible(False)
             layout = dlg.layout()
-            if layout is not None and edit is not None:
-                try:
-                    layout.removeWidget(edit)
-                except Exception:
-                    pass
-                layout.addWidget(edit)
-                layout.addWidget(warning_lbl)
+            if layout is not None:
+                if edit is not None:
+                    try:
+                        idx = layout.indexOf(edit)
+                    except Exception:
+                        idx = -1
+                    if idx != -1:
+                        layout.insertWidget(idx + 1, warning_lbl)
+                    else:
+                        layout.addWidget(warning_lbl)
+                else:
+                    layout.addWidget(warning_lbl)
             if ok_btn is not None:
                 ok_btn.setEnabled(False)
             if edit is not None:
@@ -617,7 +635,7 @@ def ask_miner_key(parent) -> tuple[str, bool]:
                 def _update_state(value: str) -> None:
                     if edit is None:
                         return
-                    normalized = value.upper()
+                    normalized = (value or '').upper()
                     if normalized != value:
                         cursor = edit.cursorPosition()
                         edit.blockSignals(True)
@@ -630,9 +648,8 @@ def ask_miner_key(parent) -> tuple[str, bool]:
                     stripped = value_local.strip()
                     is_valid = bool(KEY_PATTERN.fullmatch(stripped))
                     if ok_btn is not None:
-                        ok_btn.setEnabled(is_valid and bool(stripped))
-                    if warning_lbl is not None:
-                        warning_lbl.setVisible(bool(stripped) and not is_valid)
+                        ok_btn.setEnabled(is_valid)
+                    warning_lbl.setVisible(bool(stripped) and not is_valid)
                 edit.textChanged.connect(_update_state)
                 _update_state(edit.text())
         except Exception:
