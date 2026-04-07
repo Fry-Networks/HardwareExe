@@ -1,0 +1,30 @@
+<Window x:Class="cs_wpf_anycpu.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:cs_wpf_anycpu"
+        mc:Ignorable="d"
+        Closed="Window_Closed"
+        Title="Bright SDK Example for WPF Application" Height="440" Width="400" LocationChanged="Window_LocationChanged">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="8*" />
+            <RowDefinition Height="8*" />
+            <RowDefinition Height="8*" />
+            <RowDefinition Height="17*" />
+            <RowDefinition Height="17*" />
+            <RowDefinition Height="17*" />
+            <RowDefinition Height="17*" />
+        </Grid.RowDefinitions>
+        <ComboBox Margin="5" ItemsSource="{Binding cmb_appid}" SelectedItem="{Binding cmb_appid_sel}" Grid.Row="0" />
+        <ComboBox Margin="5" ItemsSource="{Binding cmb_txt_culture}" SelectedItem="{Binding cmb_txt_culture_sel}" Grid.Row="1" />
+        <ComboBox Margin="5" ItemsSource="{Binding cmb_not_peer_txt}" SelectedItem="{Binding cmb_not_peer_txt_sel}" Grid.Row="2" />
+        <Button Margin="5" Command="{Binding show_consent}" Content="Show Consent" Grid.Row="3" />
+        <Button Margin="5" Command="{Binding opt_out}" Content="Opt Out" Grid.Row="4" />
+        <Button Margin="5" Command="{Binding close}" Content="Close Bright SDK" Grid.Row="5" />
+        <TextBlock Margin="5" Text="{Binding choice}" Grid.Row="6" HorizontalAlignment="Center"
+                   VerticalAlignment="Center"  FontSize="14"/>
+    </Grid>
+</Window>
+

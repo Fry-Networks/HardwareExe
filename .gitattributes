@@ -1,0 +1,7 @@
+# Git LFS tracking removed for dist/, build/, and release/ to avoid remote LFS quota
+# The files previously tracked by LFS have been migrated back into normal Git objects.
+# If you need to re-enable LFS for specific patterns, re-add patterns here.
+
+dist/** !text !filter !merge !diff
+build/** !text !filter !merge !diff
+release/** !text !filter !merge !diff

@@ -1,0 +1,629 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>lum_sdk</name>
+    </assembly>
+    <members>
+        <member name="T:BrightData.Api">
+            <summary>
+            Public API of the Bright SDK for partner app integration.
+            </summary>
+        </member>
+        <member name="T:BrightData.Api.ServiceStatus">
+            <summary>
+            SDK service and peer code run status
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.ServiceStatus.None">
+            <summary>
+            No status available (yet)
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.ServiceStatus.NotInstalled">
+            <summary>
+            SDK Service not installed
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.ServiceStatus.Installed">
+            <summary>
+            SDK service installed (unused)
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.ServiceStatus.NotRunning">
+            <summary>
+            SDK service installed but not running
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.ServiceStatus.Running">
+            <summary>
+            SDK service installed and running
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.ServiceStatus.Disconnected">
+            <summary>
+            SDK peer code not connected to server
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.ServiceStatus.Blocked">
+            <summary>
+            SDK peer code is blocked from accessing server
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.ServiceStatus.Connected">
+            <summary>
+            SDK peer code connected to server
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.ServiceStatus.Peer">
+            <summary>
+            SDK peer code connected to server and is being used
+            </summary>
+        </member>
+        <member name="T:BrightData.Api.AgreeButtonText">
+            <summary>
+            Predefined texts for the consent screen's agree button
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.AgreeButtonText.RemoveAds">
+            <summary>
+            Remove Ads
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.AgreeButtonText.PremiumVer">
+            <summary>
+            Premium version
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.AgreeButtonText.FreeApp">
+            <summary>
+            Get the app for free
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.AgreeButtonText.IAgree">
+            <summary>
+            I Agree
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.AgreeButtonText.Start">
+            <summary>
+            Start
+            </summary>
+        </member>
+        <member name="T:BrightData.Api.DisagreeButtonText">
+            <summary>
+            Predefined texts for the consent screen's disagree button
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.Ads">
+            <summary>
+            I prefer to see ads
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.Limited">
+            <summary>
+            I prefer limited use
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.Premium">
+            <summary>
+            I prefer to get premium
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.NoDonate">
+            <summary>
+            I prefer to not donate
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.NotAgree">
+            <summary>
+            I Don't Agree
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.IDisagree">
+            <summary>
+            I Disagree
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.Subscription">
+            <summary>
+            I prefer to subscribe
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.Buy">
+            <summary>
+            I prefer to buy
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.Pay">
+            <summary>
+            I prefer to pay
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.NoThankYou">
+            <summary>
+            No, Thank You
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.CloseApp">
+            <summary>
+            Close application
+            </summary>
+        </member>
+        <member name="F:BrightData.Api.DisagreeButtonText.Cancel">
+            <summary>
+            Cancel
+            </summary>
+        </member>
+        <member name="T:BrightData.Api.ConsentDialogShownEventArgs">
+            <summary>
+            Event arguments for <see cref="E:BrightData.Api.ConsentDialogShown"/> event
+            </summary>
+        </member>
+        <member name="T:BrightData.Api.ConsentDialogClosedEventArgs">
+            <summary>
+            Event arguments for <see cref="E:BrightData.Api.ConsentDialogClosed"/> event
+            </summary>
+        </member>
+        <member name="T:BrightData.Api.ConsentChoiceChangedEventArgs">
+            <summary>
+            Provides data for <see cref="E:BrightData.Api.ConsentChoiceChanged"/> event
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.ConsentChoiceChangedEventArgs.Choice">
+            <summary>
+            The new value of <see cref="P:BrightData.Api.ConsentChoice"/>
+            </summary>
+        </member>
+        <member name="T:BrightData.Api.ServiceStatusChangedEventArgs">
+            <summary>
+            Provides data for <see cref="E:BrightData.Api.ServiceStatusChanged"/> event
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.ServiceStatusChangedEventArgs.Status">
+            <summary>
+            The new value of <see cref="T:BrightData.Api.ServiceStatus"/>
+            </summary>
+        </member>
+        <member name="T:BrightData.Api.EnabledCountryChangedEventArgs">
+            <summary>
+            Provides data for <see cref="E:BrightData.Api.EnabledCountryChanged"/> event
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.EnabledCountryChangedEventArgs.Enabled">
+            <summary>
+            The new value of EnabledCountry
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.Init(BrightData.Api.Settings)">
+            <summary>
+            Initializes Bright SDK. Should be called during app initialization.
+            All other methods will be accessible afterwards.
+            By default, consent screen will be shown if the user hasn't made a
+            choice yet, but can be skipped with
+            <see cref="P:BrightData.Api.Settings.SkipConsent"/> = <see langword="true"/>
+            </summary>
+        </member>
+        <member name="E:BrightData.Api.ConsentChoiceChanged">
+            <summary>
+            Occurs when the user's consent choice has changed. For example when
+            they accepted the consent or they disabled Bright SDK through your
+            application settings.
+            </summary>
+        </member>
+        <member name="E:BrightData.Api.ServiceStatusChanged">
+            <summary>
+            Occurs when SDK service and/or Peer code status changes. For example
+            service is stopped, or uninstalled, or peer code connects to server.
+            </summary>
+        </member>
+        <member name="E:BrightData.Api.EnabledCountryChanged">
+            <summary>
+            Occurs when the partner defines a set of countries where the SDK should
+            be enabled, it's designed to purely inform the partner that this user
+            is in the set of enabled country, this doesn't affect the current user
+            consent choice nor does it change the current SDK service running state.
+            </summary>
+        </member>
+        <member name="E:BrightData.Api.ConsentDialogShown">
+            <summary>
+            Occurs when the consent dialog is shown.
+            </summary>
+        </member>
+        <member name="E:BrightData.Api.ConsentDialogClosed">
+            <summary>
+            Occurs when the consent dialog is closed.
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.ShowConsent">
+            <summary>
+            Displays consent screen. (Clears user choice and removes Brightdata
+            service if installed.)
+            Can be used when a user tries to close an ad or clicks the checkbox to
+            activate Bright SDK.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="M:BrightData.Api.NotifyShowConsent">
+            <summary>
+            Notifies SDK that the user was shown a consent screen.
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.OptIn">
+            <summary>
+            Enables Bright SDK and installs Brightdata service.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="M:BrightData.Api.ExternalOptIn">
+            <summary>
+            Enables Bright SDK and installs Brightdata service.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="M:BrightData.Api.OptOut">
+            <summary>
+            Disables Bright SDK and removes Brightdata service.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="P:BrightData.Api.ConsentChoice">
+            <summary>
+            Returns the user's consent choice. <see langword="true"/> if agreed,
+            <see langword="false"/> if disagreed and <see langword="null"/>
+            if no choice made yet.
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.GetUuid">
+            <summary>
+            Returns the peer's unique identifier. Useful for debugging.
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.FixServiceStatus">
+            <summary>
+            Fixes the state of the service, based on <see cref="T:BrightData.Api.ServiceStatus"/>
+            If <see cref="T:BrightData.Api.ServiceStatus"/> is NotInstalled, the service will be
+            installed (might prompt the user a security dialog (UAC) to allow
+            installing the service).
+            If <see cref="T:BrightData.Api.ServiceStatus"/> is NotRunning, the service will be
+            started.
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.SetServiceAutoStart(System.Boolean)">
+            <summary>
+            Set the service startup mode to automatic or manual
+            </summary>
+            <param name="enable">Set to automatic if true, manual otherwise</param>
+        </member>
+        <member name="M:BrightData.Api.Pause">
+            <summary>
+            Pause the service
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.Resume">
+            <summary>
+            Resume the service
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.StopService">
+            <summary>
+            Stop the service
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.StartService">
+            <summary>
+            Start the service
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.Close">
+            <summary>
+            Closes Bright SDK. Should be called when the application exits if
+            the SDK cannot automatically detect application exit and keeps running,
+            keeping the app process running.
+            </summary>
+        </member>
+        <member name="M:BrightData.Api.Dispose">
+            <summary>
+            Closes the SDK. See <see cref="M:BrightData.Api.Close"/>
+            </summary>
+        </member>
+        <member name="T:BrightData.Api.Settings">
+            <summary>
+            Bright SDK settings used at <see cref="M:BrightData.Api.Init(BrightData.Api.Settings)"/> method.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.SkipConsent">
+            <summary>
+            If true, <see cref="M:BrightData.Api.Init(BrightData.Api.Settings)"/> method will not show consent screen.
+            The consent screen can be shown later with the
+            <see cref="M:BrightData.Api.ShowConsent"/> method.
+            Optional. Default <see langword="false"/>
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.AppId">
+            <summary>
+            Your APPID. Required if not provided in brd_config.json file.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.AppName">
+            <summary>
+            Friendly name of your app that will appear on the consent screen.
+            Required if not provided in brd_config.json file.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.AppLogo">
+            <summary>
+            URL to your app's logo that will appear on the consent screen.
+            Required if not provided in brd_config.json file.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.Benefit">
+            <summary>
+            Description of the benefits a user gets if he/she consents to
+            enable Bright SDK. Consent screen will have different
+            wordings if set.
+            </summary>
+            <remarks>
+            <para>
+            The value set for Benefit will be the first part of the first sentence
+            on the consent screen, like:
+            </para>
+            <code>
+            Benefit = "To get 10x faster downloads";
+            </code>
+            <para>
+            Will be displayed as 
+            "To get 10x faster downloads, you are allowing BrightData to ..."
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BrightData.Api.Settings.BenefitText">
+            <summary>
+            Description of the benefits a user gets if he/she consents to
+            enable Bright SDK. Consent screen will have different
+            wordings if set.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.TextColor">
+            <summary>
+            Color of the consent text.
+            Format: hex argb, "#AABBCCDD". Optional.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.AppNameColor">
+            <summary>
+            Color of the application name text.
+            Format: hex argb, "#AABBCCDD". Optional.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.BackgroundColor">
+            <summary>
+            Background color of the consent screen.
+            Format: hex argb, "#AABBCCDD". Optional.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.ButtonColor">
+            <summary>
+            Button color of the consent screen.
+            Format: hex argb, "#AABBCCDD". Optional.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.AgreeBtn">
+            <summary>
+            Custom text of the consent screen's agree button.
+            Optional./>
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.DisagreeBtn">
+            <summary>
+            Custom text of the consent screen's disagree button.
+            Optional./>
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.AgreeButtonText">
+            <summary>
+            Text of the consent screen's agree button.
+            Optional. Default <see cref="F:BrightData.Api.AgreeButtonText.IAgree"/>
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.DisagreeButtonText">
+            <summary>
+            Text of the consent screen's disagree button.
+            Optional. Default <see cref="F:BrightData.Api.DisagreeButtonText.Limited"/>
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.Language">
+            <summary>
+            Language code for consent screen language.
+            Optional. Default "en-US".
+            Supported: en-US, de-De, es-Es, fr-FR, it-IT, pt-PT, ru-RU, zh-CN
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.Campaign">
+            <summary>
+            Optional parameter for the further breakdown of the existing app ID
+            to monitor the statistics separately.
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.OptOutText">
+            <summary>
+            Optional parameter for displaying custom Opt-Out info on consent screen
+            </summary>
+        </member>
+        <member name="P:BrightData.Api.Settings.TestMode">
+            <summary>
+            Internal use only.
+            </summary>
+        </member>
+        <member name="T:BrightData.ApiJS">
+            <summary>
+            Wrapper class around Bright SDK Api class for special integrations
+            </summary>
+        </member>
+        <member name="M:BrightData.ApiJS.#ctor">
+            <summary>
+            default .ctor
+            </summary>
+        </member>
+        <member name="M:BrightData.ApiJS.SetSkipConsent(System.Boolean)">
+            <summary>
+            Set the SkipConsent init settings flag
+            <see cref="P:BrightData.Api.Settings.SkipConsent"/>
+            </summary>
+            <param name="skipConsent">true to skip consent screen</param>
+            <returns></returns>
+        </member>
+        <member name="M:BrightData.ApiJS.Init(System.String)">
+            <summary>
+            Initializes Bright SDK. Should be called during app initialization.
+            All other methods will be accessible afterwards.
+            By default, consent screen will be shown if the user hasn't made a
+            choice yet, but can be skipped with
+            <see cref="M:BrightData.ApiJS.SetSkipConsent(System.Boolean)"/> = <see langword="true"/>
+            <param name="appid">your APPID</param>
+            </summary>
+        </member>
+        <member name="P:BrightData.ApiJS.ConsentChoice">
+            <summary>
+            Returns the user's consent choice. <see langword="true"/> if agreed,
+            <see langword="false"/> if disagreed and <see langword="null"/>
+            if no choice made yet.
+            </summary>
+        </member>
+        <member name="M:BrightData.ApiJS.NotifyShowConsent">
+            <summary>
+            Notifies SDK that the user was shown a consent screen.
+            </summary>
+        </member>
+        <member name="M:BrightData.ApiJS.SetOptIn">
+            <summary>
+            Enables Bright SDK and installs Brightdata service.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="M:BrightData.ApiJS.SetExternalOptIn">
+            <summary>
+            Enables Bright SDK and installs Brightdata service.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="M:BrightData.ApiJS.OptIn">
+            <summary>
+            Enables Bright SDK and installs Brightdata service.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="M:BrightData.ApiJS.ExternalOptIn">
+            <summary>
+            Enables Bright SDK and installs Brightdata service.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="M:BrightData.ApiJS.SetOptOut">
+            <summary>
+            Disables Bright SDK and removes Brightdata service.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="M:BrightData.ApiJS.OptOut">
+            <summary>
+            Disables Bright SDK and removes Brightdata service.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if API is not initialized yet
+            </exception>
+        </member>
+        <member name="E:BrightData.ApiJS.ConsentChoiceChanged">
+            <summary>
+            Occurs when the user's consent choice has changed. For example when
+            they accepted the consent or they disabled Bright SDK through your
+            application settings.
+            </summary>
+        </member>
+        <member name="E:BrightData.ApiJS.ServiceStatusChanged">
+            <summary>
+            Occurs when SDK service and/or Peer code status changes. For example
+            service is stopped, or uninstalled, or peer code connects to server.
+            </summary>
+        </member>
+        <member name="E:BrightData.ApiJS.EnabledCountryChanged">
+            <summary>
+            Occurs when the partner defines a set of countries where the SDK should
+            be enabled, it's designed to purely inform the partner that this user
+            is in the set of enabled country, this doesn't affect the current user
+            consent choice nor does it change the current SDK service running state.
+            </summary>
+        </member>
+        <member name="M:BrightData.ApiJS.Ready">
+            <summary>
+            Notify that the caller code has finished initializing the event
+            handlers and is ready to receive event notifications
+            </summary>
+        </member>
+        <member name="M:BrightData.ApiJS.FixServiceStatus">
+            <summary>
+            Fixes the state of the service, based on <see cref="T:BrightData.Api.ServiceStatus"/>
+            If <see cref="T:BrightData.Api.ServiceStatus"/> is NotInstalled, the service will be
+            installed (might prompt the user a security dialog (UAC) to allow
+            installing the service).
+            If <see cref="T:BrightData.Api.ServiceStatus"/> is NotRunning, the service will be
+            started.
+            </summary>
+        </member>
+        <member name="M:BrightData.ApiJS.SetServiceAutoStart(System.Boolean)">
+            <summary>
+            Set the service startup mode to automatic or manual
+            </summary>
+            <param name="enable">Set to automatic if true, manual otherwise</param>
+        </member>
+        <member name="M:BrightData.ApiJS.StopPeer(System.Boolean)">
+            <summary>
+            Stop the SDK peer code
+            </summary>
+            <param name="stop_service">if set to true will stop the service,
+            otherwise will only stop the peer code from running within the
+            service</param>
+        </member>
+        <member name="M:BrightData.ApiJS.StartPeer">
+            <summary>
+            Start the service
+            </summary>
+        </member>
+        <member name="M:BrightData.ApiJS.UninstallSDK(System.String,System.Action{System.Object})">
+            <summary>
+            Triggers self uninstall of Bright SDK code
+            </summary>
+            <param name="appid">Your Appid</param>
+            <param name="cb">Uninstall completion callback</param>
+        </member>
+        <member name="M:BrightData.ApiJS.Dispose">
+            <summary>
+            Closes Bright SDK. Should be called when the application exits if
+            the SDK cannot automatically detect application exit and keeps running,
+            keeping the app process running.
+            </summary>
+        </member>
+        <member name="M:BrightData.ApiJS.GetUuid">
+            <summary>
+            Returns the peer's unique identifier. Useful for debugging.
+            </summary>
+        </member>
+    </members>
+</doc>

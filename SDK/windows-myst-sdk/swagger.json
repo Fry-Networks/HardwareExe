@@ -1,0 +1,6044 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "The purpose of this documentation is to provide developers an insight of how to\ninteract with Mysterium Node via Tequila API.\nThis should demonstrate all the possible API calls with described parameters and responses.",
+    "title": "Tequila API",
+    "version": "dev"
+  },
+  "host": "127.0.0.1:4050",
+  "paths": {
+    "/access-policies": {
+      "get": {
+        "description": "Returns list of access policies",
+        "summary": "Returns access policies",
+        "operationId": "AccessPolicies",
+        "responses": {
+          "200": {
+            "description": "List of access policies",
+            "schema": {
+              "$ref": "#/definitions/AccessPolicies"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/affiliator/token/{token}/reward": {
+      "post": {
+        "summary": "Returns the amount of reward for a token (affiliator)",
+        "operationId": "AffiliatorTokenReward",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Token for which to lookup the reward",
+            "name": "token",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token Reward",
+            "schema": {
+              "$ref": "#/definitions/TokenRewardAmount"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/auth/authenticate": {
+      "post": {
+        "description": "Authenticates user and issues auth token",
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authenticate",
+        "operationId": "Authenticate",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AuthRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authentication succeeded",
+            "schema": {
+              "$ref": "#/definitions/AuthResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "description": "Authenticates user and sets cookie with issued auth token",
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login",
+        "operationId": "Login",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AuthRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authentication succeeded",
+            "schema": {
+              "$ref": "#/definitions/AuthResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/auth/login-mystnodes": {
+      "get": {
+        "description": "SSO init endpoint to auth via mystnodes",
+        "tags": [
+          "SSO"
+        ],
+        "summary": "LoginMystnodesInit",
+        "operationId": "LoginMystnodesInit",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "a redirect to send authorization grant to",
+            "name": "redirect_url",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "link response",
+            "schema": {
+              "$ref": "#/definitions/MystnodesSSOLinkResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "SSO login using grant provided by mystnodes.com",
+        "tags": [
+          "SSO"
+        ],
+        "summary": "LoginMystnodesWithGrant",
+        "operationId": "LoginMystnodesWithGrant",
+        "responses": {
+          "200": {
+            "description": "grant was verified against mystnodes using PKCE workflow. This will set access token cookie."
+          },
+          "401": {
+            "description": "grant failed to be verified"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "delete": {
+        "description": "Clears authentication cookie",
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout",
+        "operationId": "Logout",
+        "responses": {
+          "200": {
+            "description": "Logged out successfully"
+          }
+        }
+      }
+    },
+    "/auth/password": {
+      "put": {
+        "description": "Changes user password",
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Change password",
+        "operationId": "changePassword",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ChangePasswordRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password changed successfully"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/config": {
+      "get": {
+        "description": "Returns default configuration",
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Returns current configuration values",
+        "operationId": "getConfig",
+        "responses": {
+          "200": {
+            "description": "Currently active configuration",
+            "schema": {
+              "$ref": "#/definitions/configPayload"
+            }
+          }
+        }
+      }
+    },
+    "/config/default": {
+      "get": {
+        "description": "Returns default configuration",
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Returns default configuration",
+        "operationId": "getDefaultConfig",
+        "responses": {
+          "200": {
+            "description": "Default configuration values",
+            "schema": {
+              "$ref": "#/definitions/configPayload"
+            }
+          }
+        }
+      }
+    },
+    "/config/user": {
+      "get": {
+        "description": "Returns current user configuration",
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Returns current user configuration",
+        "operationId": "getUserConfig",
+        "responses": {
+          "200": {
+            "description": "User set configuration values",
+            "schema": {
+              "$ref": "#/definitions/configPayload"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "For keys present in the payload, it will set or remove the user config values (if the key is null). Changes are persisted to the config file.",
+        "tags": [
+          "Configuration"
+        ],
+        "summary": "Sets and returns user configuration",
+        "operationId": "serUserConfig",
+        "parameters": [
+          {
+            "description": "configuration keys/values",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/configPayload"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User configuration",
+            "schema": {
+              "$ref": "#/definitions/configPayload"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/connection": {
+      "get": {
+        "description": "Returns status of current connection",
+        "tags": [
+          "Connection"
+        ],
+        "summary": "Returns connection status",
+        "operationId": "connectionStatus",
+        "responses": {
+          "200": {
+            "description": "Status",
+            "schema": {
+              "$ref": "#/definitions/ConnectionInfoDTO"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Consumer opens connection to provider",
+        "tags": [
+          "Connection"
+        ],
+        "summary": "Starts new connection",
+        "operationId": "connectionCreate",
+        "parameters": [
+          {
+            "description": "Parameters in body (consumer_id, provider_id, service_type) required for creating new connection",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ConnectionCreateRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Connection started",
+            "schema": {
+              "$ref": "#/definitions/ConnectionInfoDTO"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "422": {
+            "description": "Unable to process the request at this point",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Stops current connection",
+        "tags": [
+          "Connection"
+        ],
+        "summary": "Stops connection",
+        "operationId": "connectionCancel",
+        "responses": {
+          "202": {
+            "description": "Connection stopped"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "422": {
+            "description": "Unable to process the request at this point (e.g. no active connection exists)",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/connection/ip": {
+      "get": {
+        "description": "Returns current public IP address",
+        "tags": [
+          "Connection"
+        ],
+        "summary": "Returns IP address",
+        "operationId": "getConnectionIP",
+        "responses": {
+          "200": {
+            "description": "Public IP address",
+            "schema": {
+              "$ref": "#/definitions/IPDTO"
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/connection/location": {
+      "get": {
+        "description": "Returns connection locations",
+        "tags": [
+          "Connection"
+        ],
+        "summary": "Returns connection location",
+        "operationId": "getConnectionLocation",
+        "responses": {
+          "200": {
+            "description": "Connection locations",
+            "schema": {
+              "$ref": "#/definitions/LocationDTO"
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/connection/proxy/ip": {
+      "get": {
+        "description": "Returns proxy public IP address",
+        "tags": [
+          "Connection"
+        ],
+        "summary": "Returns IP address",
+        "operationId": "getProxyIP",
+        "responses": {
+          "200": {
+            "description": "Public IP address",
+            "schema": {
+              "$ref": "#/definitions/IPDTO"
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/connection/proxy/location": {
+      "get": {
+        "description": "Returns proxy connection locations",
+        "tags": [
+          "Connection"
+        ],
+        "summary": "Returns proxy connection location",
+        "operationId": "getProxyLocation",
+        "responses": {
+          "200": {
+            "description": "Proxy connection locations",
+            "schema": {
+              "$ref": "#/definitions/LocationDTO"
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/connection/statistics": {
+      "get": {
+        "description": "Returns statistics about current connection",
+        "tags": [
+          "Connection"
+        ],
+        "summary": "Returns connection statistics",
+        "operationId": "connectionStatistics",
+        "responses": {
+          "200": {
+            "description": "Connection statistics",
+            "schema": {
+              "$ref": "#/definitions/ConnectionStatisticsDTO"
+            }
+          }
+        }
+      }
+    },
+    "/connection/traffic": {
+      "get": {
+        "description": "Returns traffic information about requested connection",
+        "tags": [
+          "Connection"
+        ],
+        "summary": "Returns connection traffic information",
+        "operationId": "connectionTraffic",
+        "responses": {
+          "200": {
+            "description": "Connection traffic",
+            "schema": {
+              "$ref": "#/definitions/ConnectionTrafficDTO"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/entertainment": {
+      "get": {
+        "description": "Estimate entertainment durations/data cap for the MYST amount specified.",
+        "tags": [
+          "Entertainment"
+        ],
+        "summary": "Estimate entertainment durations/data cap for the MYST amount specified.",
+        "operationId": "Estimate",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Amount of MYST to give entertainment estimates for.",
+            "name": "amount",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entertainment estimates",
+            "schema": {
+              "$ref": "#/definitions/EntertainmentEstimateResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/exchange/myst/{currency}": {
+      "get": {
+        "description": "Returns the myst price in the given currency (dai is deprecated)",
+        "tags": [
+          "Exchange"
+        ],
+        "summary": "Returns the myst price in the given currency",
+        "operationId": "ExchangeMyst",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Currency to which MYST is converted",
+            "name": "currency",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MYST price in given currency",
+            "schema": {
+              "$ref": "#/definitions/CurrencyExchangeDTO"
+            }
+          },
+          "404": {
+            "description": "Currency is not supported",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/export": {
+      "post": {
+        "description": "Creates identity and stores in keystore encrypted with passphrase",
+        "tags": [
+          "export"
+        ],
+        "summary": "Exports a given identity",
+        "operationId": "Identity",
+        "parameters": [
+          {
+            "description": "Parameter in body (passphrase) required for creating new identity",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/IdentityExportRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identity created",
+            "schema": {
+              "$ref": "#/definitions/IdentityExportResponseDTO"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/feedback/bug-report": {
+      "post": {
+        "description": "Creates a bug report with logs",
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Creates a bug report",
+        "operationId": "bugReport",
+        "parameters": [
+          {
+            "description": "Report a bug",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/BugReport"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bug report response",
+            "schema": {
+              "$ref": "#/definitions/CreateBugReportResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "429": {
+            "description": "Too many requests (max. 1/minute)",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "503": {
+            "description": "Unavailable",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/feedback/issue": {
+      "post": {
+        "description": "Reports user issue to github",
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Reports user issue to github",
+        "operationId": "reportIssueGithub",
+        "deprecated": true,
+        "parameters": [
+          {
+            "description": "Bug report issue request",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/BugReport"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue reported",
+            "schema": {
+              "$ref": "#/definitions/ReportIssueGithubResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "429": {
+            "description": "Too many requests (max. 1/minute)",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "503": {
+            "description": "Unavailable",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/feedback/issue/intercom": {
+      "post": {
+        "description": "Reports user user to intercom",
+        "tags": [
+          "Feedback"
+        ],
+        "summary": "Reports user issue to intercom",
+        "operationId": "reportIssueIntercom",
+        "deprecated": true,
+        "parameters": [
+          {
+            "description": "Report issue request",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UserReport"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Issue reported"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "429": {
+            "description": "Too many requests (max. 1/minute)",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "503": {
+            "description": "Unavailable",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/healthcheck": {
+      "get": {
+        "description": "Returns health check information about client",
+        "tags": [
+          "Client"
+        ],
+        "summary": "Returns information about client",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Health check information",
+            "schema": {
+              "$ref": "#/definitions/HealthCheckDTO"
+            }
+          }
+        }
+      }
+    },
+    "/identities": {
+      "get": {
+        "description": "Returns list of identities",
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Returns identities",
+        "operationId": "listIdentities",
+        "responses": {
+          "200": {
+            "description": "List of identities",
+            "schema": {
+              "$ref": "#/definitions/ListIdentitiesResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Creates identity and stores in keystore encrypted with passphrase",
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Creates new identity",
+        "operationId": "createIdentity",
+        "parameters": [
+          {
+            "description": "Parameter in body (passphrase) required for creating new identity",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/IdentityCreateRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identity created",
+            "schema": {
+              "$ref": "#/definitions/IdentityRefDTO"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/identities-import": {
+      "post": {
+        "description": "Imports a given identity returning it is a blob of text which can later be used to import it back.",
+        "tags": [
+          "Identities"
+        ],
+        "summary": "Imports a given identity.",
+        "operationId": "importIdentity",
+        "parameters": [
+          {
+            "description": "Parameter in body used to import an identity.",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/IdentityImportRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unlocked identity returned",
+            "schema": {
+              "$ref": "#/definitions/IdentityRefDTO"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "422": {
+            "description": "Unable to process the request at this point",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/identities/current": {
+      "put": {
+        "description": "Tries to retrieve the last used identity, the first identity, or creates and returns a new identity",
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Returns my current identity",
+        "operationId": "currentIdentity",
+        "parameters": [
+          {
+            "description": "Parameter in body (passphrase) required for creating new identity",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/IdentityCurrentRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unlocked identity returned",
+            "schema": {
+              "$ref": "#/definitions/IdentityRefDTO"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/identities/provider/eligibility": {
+      "get": {
+        "summary": "Checks if provider is eligible for free registration",
+        "operationId": "ProviderEligibility",
+        "responses": {
+          "200": {
+            "description": "Eligibility response",
+            "schema": {
+              "$ref": "#/definitions/EligibilityResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/identities/{id}": {
+      "get": {
+        "description": "Provide identity details",
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Get identity",
+        "operationId": "getIdentity",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "hex address of identity",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identity retrieved",
+            "schema": {
+              "$ref": "#/definitions/IdentityRefDTO"
+            }
+          },
+          "404": {
+            "description": "ID not found",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/identities/{id}/balance/refresh": {
+      "put": {
+        "description": "Refresh balance of given identity",
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Refresh balance of given identity",
+        "operationId": "balance",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "hex address of identity",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated balance",
+            "schema": {
+              "$ref": "#/definitions/BalanceDTO"
+            }
+          },
+          "404": {
+            "description": "ID not found",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/identities/{id}/beneficiary": {
+      "get": {
+        "description": "Provides beneficiary address for given identity",
+        "tags": [
+          "Identity",
+          "beneficiary"
+        ],
+        "summary": "Provide identity beneficiary address",
+        "operationId": "address",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "hex address of identity",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Beneficiary retrieved",
+            "schema": {
+              "$ref": "#/definitions/IdentityBeneficiaryResponseDTO"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/identities/{id}/register": {
+      "post": {
+        "description": "Registers identity on Mysterium Network smart contracts using Transactor",
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Registers identity",
+        "operationId": "RegisterIdentity",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity address to register",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "all body parameters a optional",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/IdentityRegisterRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identity registered."
+          },
+          "202": {
+            "description": "Identity registration accepted and will be processed."
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "422": {
+            "description": "Unable to process the request at this point",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/identities/{id}/registration": {
+      "get": {
+        "description": "Provides registration status for given identity, if identity is not registered - provides additional data required for identity registration",
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Provide identity registration status",
+        "operationId": "identityRegistration",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "hex address of identity",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status retrieved",
+            "schema": {
+              "$ref": "#/definitions/IdentityRegistrationResponseDTO"
+            }
+          },
+          "404": {
+            "description": "ID not found",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/identities/{id}/unlock": {
+      "put": {
+        "description": "Uses passphrase to decrypt identity stored in keystore",
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Unlocks identity",
+        "operationId": "unlockIdentity",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity stored in keystore",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Parameter in body (passphrase) required for unlocking identity",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/IdentityUnlockRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Identity unlocked"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "403": {
+            "description": "Unlock failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "404": {
+            "description": "ID not found",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/location": {
+      "get": {
+        "description": "Returns original locations",
+        "tags": [
+          "Location"
+        ],
+        "summary": "Returns original location",
+        "operationId": "getOriginLocation",
+        "responses": {
+          "200": {
+            "description": "Original locations",
+            "schema": {
+              "$ref": "#/definitions/LocationDTO"
+            }
+          }
+        }
+      }
+    },
+    "/mmn/api-key": {
+      "post": {
+        "description": "sets MMN's API key",
+        "tags": [
+          "MMN"
+        ],
+        "summary": "sets MMN's API key",
+        "operationId": "setApiKey",
+        "parameters": [
+          {
+            "description": "api_key field",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MMNApiKeyRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key has been set"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "422": {
+            "description": "Unable to process the request at this point",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Clears MMN's API key from config",
+        "tags": [
+          "MMN"
+        ],
+        "summary": "Clears MMN's API key from config",
+        "operationId": "clearApiKey",
+        "responses": {
+          "200": {
+            "description": "MMN API key removed"
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/mmn/claim-link": {
+      "get": {
+        "description": "Generates claim link to claim Node on mystnodes.com with a click",
+        "tags": [
+          "MMN"
+        ],
+        "summary": "Generate claim link",
+        "operationId": "getClaimLink",
+        "responses": {
+          "200": {
+            "description": "Link response",
+            "schema": {
+              "$ref": "#/definitions/MMNLinkRedirectResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/mmn/onboarding": {
+      "get": {
+        "description": "Generates onboarding link for one click onboarding",
+        "tags": [
+          "MMN"
+        ],
+        "summary": "Generate onboarding link",
+        "operationId": "GetOnboardingLink",
+        "responses": {
+          "200": {
+            "description": "Link response",
+            "schema": {
+              "$ref": "#/definitions/MMNLinkRedirectResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "verify grant for onboarding",
+        "tags": [
+          "MMN"
+        ],
+        "summary": "verify grant for onboarding",
+        "operationId": "VerifyGrant",
+        "responses": {
+          "200": {
+            "description": "Link response",
+            "schema": {
+              "$ref": "#/definitions/MMNGrantVerificationResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/mmn/report": {
+      "get": {
+        "description": "returns MMN's API key",
+        "tags": [
+          "MMN"
+        ],
+        "summary": "returns MMN's API key",
+        "operationId": "getApiKey",
+        "responses": {
+          "200": {
+            "description": "MMN's API key",
+            "schema": {
+              "$ref": "#/definitions/MMNApiKeyRequest"
+            }
+          }
+        }
+      }
+    },
+    "/nat/type": {
+      "get": {
+        "description": "Returns NAT type. May produce invalid result while VPN connection is established",
+        "tags": [
+          "NAT"
+        ],
+        "summary": "Shows NAT type in terms of traversal capabilities.",
+        "operationId": "NATTypeDTO",
+        "responses": {
+          "200": {
+            "description": "NAT type",
+            "schema": {
+              "$ref": "#/definitions/NATTypeDTO"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/latest-release": {
+      "get": {
+        "description": "Checks for latest Node release package and retrieves its information",
+        "tags": [
+          "node"
+        ],
+        "summary": "Latest Node release information",
+        "operationId": "GetLatestRelease",
+        "responses": {
+          "200": {
+            "description": "Latest Node release information",
+            "schema": {
+              "$ref": "#/definitions/LatestReleaseResponse"
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve latest Node release information",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/monitoring-agent-statuses": {
+      "get": {
+        "description": "Node connectivity statuses as seen by monitoring agent",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node connectivity statuses from monitoring agent",
+        "operationId": "MonitoringAgentStatuses",
+        "responses": {
+          "200": {
+            "description": "Monitoring agent statuses (\"success\"/\"cancelled\"/\"connect_drop/\"connect_fail/\"internet_fail)",
+            "schema": {
+              "$ref": "#/definitions/MonitoringAgentResponse"
+            }
+          }
+        }
+      }
+    },
+    "/node/monitoring-status": {
+      "get": {
+        "description": "Node Status as seen by monitoring agent",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node proposal status",
+        "operationId": "NodeStatus",
+        "responses": {
+          "200": {
+            "description": "Node status (\"passed\"/\"failed\"/\"pending)",
+            "schema": {
+              "$ref": "#/definitions/NodeStatusResponse"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/activity-stats": {
+      "get": {
+        "description": "Node activity stats",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node activity stats",
+        "operationId": "GetProviderActivityStats",
+        "responses": {
+          "200": {
+            "description": "Provider activity stats",
+            "schema": {
+              "$ref": "#/definitions/ActivityStatsResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/consumers-count": {
+      "get": {
+        "description": "Node unique consumers count served during a period of time.",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node consumers number served during a period of time",
+        "operationId": "GetProviderConsumersCount",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "period of time (\"1d\", \"7d\", \"30d\")",
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider consumers count",
+            "schema": {
+              "$ref": "#/definitions/ProviderConsumersCountResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/quality": {
+      "get": {
+        "description": "Node connectivity quality",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node quality",
+        "operationId": "GetProviderQuality",
+        "responses": {
+          "200": {
+            "description": "Provider quality",
+            "schema": {
+              "$ref": "#/definitions/QualityInfoResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/series/data": {
+      "get": {
+        "description": "Node data series metrics of transferred bytes during a period of time.",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node data series metrics of transferred bytes",
+        "operationId": "GetProviderTransferredDataSeries",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "period of time (\"1d\", \"7d\", \"30d\")",
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider time series metrics of transferred bytes",
+            "schema": {
+              "$ref": "#/definitions/ProviderTransferredDataSeriesResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/series/earnings": {
+      "get": {
+        "description": "Node time series metrics of earnings during a period of time.",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node  time series metrics of earnings during a period of time",
+        "operationId": "GetProviderEarningsSeries",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "period of time (\"1d\", \"7d\", \"30d\")",
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider time series metrics of MYSTT earnings",
+            "schema": {
+              "$ref": "#/definitions/ProviderEarningsSeriesResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/series/sessions": {
+      "get": {
+        "description": "Node time series metrics of sessions started during a period of time.",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node data series metrics of sessions started during a period of time",
+        "operationId": "GetProviderSessionsSeries",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "period of time (\"1d\", \"7d\", \"30d\")",
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider time series metrics of started sessions",
+            "schema": {
+              "$ref": "#/definitions/ProviderSessionsSeriesResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/service-earnings": {
+      "get": {
+        "description": "Node earnings per service and total earnings in the all network.",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node earnings per service and total earnings in the all network",
+        "operationId": "GetProviderServiceEarnings",
+        "responses": {
+          "200": {
+            "description": "earnings per service and total earnings",
+            "schema": {
+              "$ref": "#/definitions/EarningsPerServiceResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/sessions": {
+      "get": {
+        "description": "Node sessions metrics during a period of time",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node sessions data during a period of time",
+        "operationId": "GetProviderSessions",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "period of time (\"1d\", \"7d\", \"30d\")",
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider sessions list",
+            "schema": {
+              "$ref": "#/definitions/ProviderSessionsResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/sessions-count": {
+      "get": {
+        "description": "Node sessions count during a period of time",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides Node sessions number during a period of time",
+        "operationId": "GetProviderSessionsCount",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "period of time (\"1d\", \"7d\", \"30d\")",
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider sessions count",
+            "schema": {
+              "$ref": "#/definitions/ProviderSessionsCountResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/node/provider/transferred-data": {
+      "get": {
+        "description": "Node transferred data during a period of time",
+        "tags": [
+          "provider"
+        ],
+        "summary": "Provides total traffic served by the provider during a period of time",
+        "operationId": "GetProviderTransferredData",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "period of time (\"1d\", \"7d\", \"30d\")",
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider transferred data",
+            "schema": {
+              "$ref": "#/definitions/ProviderTransferredDataResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/proposals": {
+      "get": {
+        "description": "Returns list of proposals filtered by provider id",
+        "tags": [
+          "Proposal"
+        ],
+        "summary": "Returns proposals",
+        "operationId": "listProposals",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "id of provider proposals",
+            "name": "provider_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "the service type of the proposal. Possible values are \"openvpn\", \"wireguard\" and \"noop\"",
+            "name": "service_type",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "the access policy id to filter the proposals by",
+            "name": "access_policy",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "the access policy source to filter the proposals by",
+            "name": "access_policy_source",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "If given will filter proposals by node location country.",
+            "name": "country",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "IP Type (residential, datacenter, etc.).",
+            "name": "ip_type",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Minimum compatibility level of the proposal.",
+            "name": "compatibility_min",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Maximum compatibility level of the proposal.",
+            "name": "compatibility_max",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "description": "Minimum quality of the provider.",
+            "name": "quality_min",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Pick nodes compatible with NAT of specified type. Specify \"auto\" to probe NAT.",
+            "name": "nat_compatibility",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of proposals",
+            "schema": {
+              "$ref": "#/definitions/ListProposalsResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/proposals/countries": {
+      "get": {
+        "description": "Returns a list of countries with a number of proposals",
+        "tags": [
+          "Countries"
+        ],
+        "summary": "Returns number of proposals per country",
+        "operationId": "listCountries",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "id of provider proposals",
+            "name": "provider_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "the service type of the proposal. Possible values are \"openvpn\", \"wireguard\" and \"noop\"",
+            "name": "service_type",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "the access policy id to filter the proposals by",
+            "name": "access_policy",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "the access policy source to filter the proposals by",
+            "name": "access_policy_source",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "If given will filter proposals by node location country.",
+            "name": "country",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "IP Type (residential, datacenter, etc.).",
+            "name": "ip_type",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Minimum compatibility level of the proposal.",
+            "name": "compatibility_min",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Maximum compatibility level of the proposal.",
+            "name": "compatibility_max",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "description": "Minimum quality of the provider.",
+            "name": "quality_min",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Pick nodes compatible with NAT of specified type. Specify \"auto\" to probe NAT.",
+            "name": "nat_compatibility",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of countries",
+            "schema": {
+              "$ref": "#/definitions/ListProposalsCountiesResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/proposals/filter-presets": {
+      "get": {
+        "description": "Returns proposal filter presets",
+        "tags": [
+          "Proposal"
+        ],
+        "summary": "Returns proposal filter presets",
+        "operationId": "proposalFilterPresets",
+        "responses": {
+          "200": {
+            "description": "List of proposal filter presets",
+            "schema": {
+              "$ref": "#/definitions/ListProposalFilterPresetsResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/services": {
+      "get": {
+        "description": "ServiceList provides a list of running services on the node.",
+        "tags": [
+          "Service"
+        ],
+        "summary": "List of services",
+        "operationId": "ServiceListResponse",
+        "responses": {
+          "200": {
+            "description": "List of running services",
+            "schema": {
+              "$ref": "#/definitions/ServiceListResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Provider starts serving new service to consumers",
+        "tags": [
+          "Service"
+        ],
+        "summary": "Starts service",
+        "operationId": "serviceStart",
+        "parameters": [
+          {
+            "description": "Parameters in body (providerID) required for starting new service",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ServiceStartRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Initiated service start",
+            "schema": {
+              "$ref": "#/definitions/ServiceInfoDTO"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "422": {
+            "description": "Unable to process the request at this point",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/services/:id": {
+      "get": {
+        "description": "ServiceGet provides info for requested service on the node.",
+        "tags": [
+          "Service"
+        ],
+        "summary": "Information about service",
+        "operationId": "serviceGet",
+        "responses": {
+          "200": {
+            "description": "Service detailed information",
+            "schema": {
+              "$ref": "#/definitions/ServiceInfoDTO"
+            }
+          },
+          "404": {
+            "description": "Service not found",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Initiates service stop",
+        "tags": [
+          "Service"
+        ],
+        "summary": "Stops service",
+        "operationId": "serviceStop",
+        "responses": {
+          "202": {
+            "description": "Service Stop initiated"
+          },
+          "404": {
+            "description": "No service exists",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/sessions": {
+      "get": {
+        "description": "Returns list of sessions history filtered by given query",
+        "tags": [
+          "Session"
+        ],
+        "summary": "Returns sessions history",
+        "operationId": "sessionList",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 50,
+            "x-go-name": "PageSize",
+            "description": "Number of items per page.",
+            "name": "page_size",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "x-go-name": "Page",
+            "description": "Page to filter the items by.",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date",
+            "x-go-name": "DateFrom",
+            "description": "Filter the sessions from this date. Formatted in RFC3339 e.g. 2020-07-01.",
+            "name": "date_from",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date",
+            "x-go-name": "DateTo",
+            "description": "Filter the sessions until this date. Formatted in RFC3339 e.g. 2020-07-30.",
+            "name": "date_to",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Direction",
+            "description": "Direction to filter the sessions by. Possible values are \"Provided\", \"Consumed\".",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ConsumerID",
+            "description": "Consumer identity to filter the sessions by.",
+            "name": "consumer_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "HermesID",
+            "description": "Hermes ID to filter the sessions by.",
+            "name": "hermes_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ProviderID",
+            "description": "Provider identity to filter the sessions by.",
+            "name": "provider_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceType",
+            "description": "Service type to filter the sessions by.",
+            "name": "service_type",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Status",
+            "description": "Status to filter the sessions by. Possible values are \"New\", \"Completed\".",
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of sessions",
+            "schema": {
+              "$ref": "#/definitions/SessionListResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/sessions-connectivity-status": {
+      "get": {
+        "description": "Returns list of session connectivity status",
+        "summary": "Returns session connectivity status",
+        "operationId": "ConnectivityStatus",
+        "responses": {
+          "200": {
+            "description": "List of connectivity statuses",
+            "schema": {
+              "$ref": "#/definitions/ConnectivityStatus"
+            }
+          }
+        }
+      }
+    },
+    "/sessions/stats-aggregated": {
+      "get": {
+        "description": "Returns aggregated statistics of sessions filtered by given query",
+        "tags": [
+          "Session"
+        ],
+        "summary": "Returns sessions stats",
+        "operationId": "sessionStatsAggregated",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "date",
+            "x-go-name": "DateFrom",
+            "description": "Filter the sessions from this date. Formatted in RFC3339 e.g. 2020-07-01.",
+            "name": "date_from",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date",
+            "x-go-name": "DateTo",
+            "description": "Filter the sessions until this date. Formatted in RFC3339 e.g. 2020-07-30.",
+            "name": "date_to",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Direction",
+            "description": "Direction to filter the sessions by. Possible values are \"Provided\", \"Consumed\".",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ConsumerID",
+            "description": "Consumer identity to filter the sessions by.",
+            "name": "consumer_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "HermesID",
+            "description": "Hermes ID to filter the sessions by.",
+            "name": "hermes_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ProviderID",
+            "description": "Provider identity to filter the sessions by.",
+            "name": "provider_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceType",
+            "description": "Service type to filter the sessions by.",
+            "name": "service_type",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Status",
+            "description": "Status to filter the sessions by. Possible values are \"New\", \"Completed\".",
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session statistics",
+            "schema": {
+              "$ref": "#/definitions/SessionStatsAggregatedResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/sessions/stats-daily": {
+      "get": {
+        "description": "Returns aggregated daily statistics of sessions filtered by given query (date_from=\u003cnow -30d\u003e and date_to=\u003cnow\u003e by default)",
+        "tags": [
+          "Session"
+        ],
+        "summary": "Returns sessions stats",
+        "operationId": "sessionStatsDaily",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "date",
+            "x-go-name": "DateFrom",
+            "description": "Filter the sessions from this date. Formatted in RFC3339 e.g. 2020-07-01.",
+            "name": "date_from",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date",
+            "x-go-name": "DateTo",
+            "description": "Filter the sessions until this date. Formatted in RFC3339 e.g. 2020-07-30.",
+            "name": "date_to",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Direction",
+            "description": "Direction to filter the sessions by. Possible values are \"Provided\", \"Consumed\".",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ConsumerID",
+            "description": "Consumer identity to filter the sessions by.",
+            "name": "consumer_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "HermesID",
+            "description": "Hermes ID to filter the sessions by.",
+            "name": "hermes_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ProviderID",
+            "description": "Provider identity to filter the sessions by.",
+            "name": "provider_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceType",
+            "description": "Service type to filter the sessions by.",
+            "name": "service_type",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Status",
+            "description": "Status to filter the sessions by. Possible values are \"New\", \"Completed\".",
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily session statistics",
+            "schema": {
+              "$ref": "#/definitions/SessionStatsDTO"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/settle/history": {
+      "get": {
+        "description": "Returns settlement history",
+        "summary": "Returns settlement history",
+        "operationId": "settlementList",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 50,
+            "x-go-name": "PageSize",
+            "description": "Number of items per page.",
+            "name": "page_size",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "x-go-name": "Page",
+            "description": "Page to filter the items by.",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date",
+            "x-go-name": "DateFrom",
+            "description": "Filter the settlements from this date. Formatted in RFC3339 e.g. 2020-07-01.",
+            "name": "date_from",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date",
+            "x-go-name": "DateTo",
+            "description": "Filter the settlements until this date Formatted in RFC3339 e.g. 2020-07-30.",
+            "name": "date_to",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ProviderID",
+            "description": "Provider identity to filter the sessions by.",
+            "name": "provider_id",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "HermesID",
+            "description": "Hermes ID to filter the sessions by.",
+            "name": "hermes_id",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "Types",
+            "description": "Settlement type to filter the sessions by. \"settlement\" or \"withdrawal\"",
+            "name": "types",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns settlement history",
+            "schema": {
+              "$ref": "#/definitions/SettlementListResponse"
+            }
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/stop": {
+      "post": {
+        "description": "Initiates client termination",
+        "tags": [
+          "Client"
+        ],
+        "summary": "Stops client",
+        "operationId": "applicationStop",
+        "responses": {
+          "202": {
+            "description": "Request accepted, stopping"
+          }
+        }
+      }
+    },
+    "/terms": {
+      "get": {
+        "description": "Return an object with the current terms config",
+        "tags": [
+          "Terms"
+        ],
+        "summary": "Get terms",
+        "operationId": "getTerms",
+        "responses": {
+          "200": {
+            "description": "Terms object",
+            "schema": {
+              "$ref": "#/definitions/TermsResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Takes the given data and tries to update terms agreement config.",
+        "tags": [
+          "Terms"
+        ],
+        "summary": "Update terms agreement",
+        "operationId": "updateTerms",
+        "parameters": [
+          {
+            "description": "Required data to update terms",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TermsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Terms agreement updated"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/chains-summary": {
+      "get": {
+        "summary": "Returns available chain map",
+        "operationId": "Chains",
+        "responses": {
+          "200": {
+            "description": "Chain Summary",
+            "schema": {
+              "$ref": "#/definitions/ChainSummary"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/fees": {
+      "get": {
+        "description": "Returns fees applied by Transactor",
+        "summary": "Returns fees",
+        "operationId": "FeesDTO",
+        "deprecated": true,
+        "responses": {
+          "200": {
+            "description": "Fees applied by Transactor",
+            "schema": {
+              "$ref": "#/definitions/FeesDTO"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/identities/{id}/eligibility": {
+      "get": {
+        "summary": "Checks if given id is eligible for free registration",
+        "operationId": "Eligibility",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity address to register",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eligibility response",
+            "schema": {
+              "$ref": "#/definitions/EligibilityResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/settle/async": {
+      "post": {
+        "description": "Forces a settlement for the hermes promises. Does not wait for completion.",
+        "summary": "forces the settlement of promises for the given provider and hermes",
+        "operationId": "SettleAsync",
+        "parameters": [
+          {
+            "description": "Settle request",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/SettleRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Settle request accepted"
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/settle/sync": {
+      "post": {
+        "description": "Forces a settlement for the hermes promises and blocks until the settlement is complete.",
+        "summary": "Forces the settlement of promises for the given provider and hermes",
+        "operationId": "SettleSync",
+        "parameters": [
+          {
+            "description": "Settle request",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/SettleRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Settle request accepted"
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/settle/withdraw": {
+      "post": {
+        "description": "Asks to perform withdrawal to l1.",
+        "summary": "Asks to perform withdrawal to l1.",
+        "operationId": "Withdraw",
+        "deprecated": true,
+        "parameters": [
+          {
+            "description": "withdraw request body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/WithdrawRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Withdraw request accepted"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/stake/decrease": {
+      "post": {
+        "description": "Decreases stake on eth blockchain via the mysterium transactor.",
+        "tags": [
+          "Decrease"
+        ],
+        "summary": "Decreases stake",
+        "operationId": "Stake",
+        "parameters": [
+          {
+            "description": "decrease stake request",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/DecreaseStakeRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payout info registered"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/stake/increase/async": {
+      "post": {
+        "description": "Forces a settlement with stake increase for the hermes promises and does not block.",
+        "summary": "forces the settlement with stake increase of promises for the given provider and hermes.",
+        "operationId": "StakeIncreaseAsync",
+        "parameters": [
+          {
+            "description": "settle request body",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/SettleRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Settle request accepted"
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/stake/increase/sync": {
+      "post": {
+        "description": "Forces a settlement with stake increase for the hermes promises and blocks until the settlement is complete.",
+        "summary": "Forces the settlement with stake increase of promises for the given provider and hermes.",
+        "operationId": "StakeIncreaseSync",
+        "parameters": [
+          {
+            "description": "Settle request",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/SettleRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Settle request accepted"
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/transactor/token/{token}/reward": {
+      "post": {
+        "summary": "Returns the amount of reward for a token",
+        "operationId": "Reward",
+        "deprecated": true,
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Token for which to lookup the reward",
+            "name": "token",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token Reward",
+            "schema": {
+              "$ref": "#/definitions/TokenRewardAmount"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/ui/download-status": {
+      "get": {
+        "description": "DownloadStatus can download one remote release at a time. This endpoint provides status of the download.",
+        "tags": [
+          "UI"
+        ],
+        "summary": "Download status",
+        "operationId": "uiDownloadStatus",
+        "responses": {
+          "200": {
+            "description": "download status",
+            "schema": {
+              "$ref": "#/definitions/DownloadStatus"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/ui/download-version": {
+      "post": {
+        "description": "download a remote node UI release",
+        "tags": [
+          "UI"
+        ],
+        "summary": "Download",
+        "operationId": "uiDownload",
+        "responses": {
+          "200": {
+            "description": "Download in progress"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/ui/info": {
+      "get": {
+        "description": "Node UI information",
+        "tags": [
+          "UI"
+        ],
+        "summary": "Node UI information",
+        "operationId": "ui",
+        "responses": {
+          "200": {
+            "description": "Node UI information",
+            "schema": {
+              "$ref": "#/definitions/UI"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/ui/local-versions": {
+      "get": {
+        "description": "provides a list of node UI releases that have been downloaded or bundled with node",
+        "tags": [
+          "UI"
+        ],
+        "summary": "List remote",
+        "operationId": "uiLocalVersions",
+        "responses": {
+          "200": {
+            "description": "Local version list",
+            "schema": {
+              "$ref": "#/definitions/LocalVersionsResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/ui/remote-versions": {
+      "get": {
+        "description": "provides a list of node UI releases from github repository",
+        "tags": [
+          "UI"
+        ],
+        "summary": "List local",
+        "operationId": "uiRemoteVersions",
+        "responses": {
+          "200": {
+            "description": "Remote version list",
+            "schema": {
+              "$ref": "#/definitions/RemoteVersionsResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/ui/switch-version": {
+      "post": {
+        "description": "switch node UI version to locally available one",
+        "tags": [
+          "UI"
+        ],
+        "summary": "Switch Version",
+        "operationId": "uiSwitchVersion",
+        "responses": {
+          "200": {
+            "description": "version switched"
+          },
+          "400": {
+            "description": "Failed to parse or request validation failed",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "422": {
+            "description": "Unable to process the request at this point",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/v2/identities/{id}/payment-order": {
+      "get": {
+        "description": "Gets all orders for a given identity from the pilvytis service",
+        "tags": [
+          "Order"
+        ],
+        "summary": "Get all orders for identity",
+        "operationId": "getPaymentGatewayOrders",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity for which to get orders",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of payment orders",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PaymentOrderResponse"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/v2/identities/{id}/payment-order/{order_id}": {
+      "get": {
+        "description": "Gets an order for a given identity and order id combo from the pilvytis service",
+        "tags": [
+          "Order"
+        ],
+        "summary": "Get order",
+        "operationId": "getPaymentGatewayOrder",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity for which to get an order",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Order id",
+            "name": "order_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order object",
+            "schema": {
+              "$ref": "#/definitions/PaymentOrderResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/v2/identities/{id}/payment-order/{order_id}/invoice": {
+      "get": {
+        "description": "Gets an invoice for payment order matching the given ID and identity",
+        "tags": [
+          "Order"
+        ],
+        "summary": "Get invoice",
+        "operationId": "getPaymentGatewayOrderInvoice",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity for which to get an order invoice",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Order id",
+            "name": "order_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice PDF (binary)"
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/v2/identities/{id}/registration-payment": {
+      "get": {
+        "description": "Checks if a registration payment order for an identity has been paid in pilvytis.",
+        "tags": [
+          "Order"
+        ],
+        "summary": "Check for registration payment",
+        "operationId": "getRegistrationPaymentStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity for which to check",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registration order status",
+            "schema": {
+              "$ref": "#/definitions/RegistrationPaymentResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/v2/identities/{id}/{gw}/payment-order": {
+      "post": {
+        "description": "Takes the given data and tries to create a new payment order in the pilvytis service.",
+        "tags": [
+          "Order"
+        ],
+        "summary": "Create order",
+        "operationId": "createPaymentGatewayOrder",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity for which to create an order",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Gateway for which a payment order is created",
+            "name": "gw",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Required data to create a new order",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/PaymentOrderRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment order",
+            "schema": {
+              "$ref": "#/definitions/PaymentOrderResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/v2/payment-order-gateways": {
+      "get": {
+        "description": "Returns gateway configuration including supported currencies, minimum amounts, etc.",
+        "tags": [
+          "Order"
+        ],
+        "summary": "Get payment gateway configuration.",
+        "operationId": "getPaymentGateways",
+        "parameters": [
+          {
+            "type": "string",
+            "default": "MYST",
+            "description": "Currency for payment order options",
+            "name": "options_currency",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of payment gateways",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GatewaysResponse"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    },
+    "/v2/transactor/fees": {
+      "get": {
+        "description": "Returns fees applied by Transactor",
+        "summary": "Returns fees",
+        "operationId": "CombinedFeesResponse",
+        "responses": {
+          "200": {
+            "description": "Fees applied by Transactor",
+            "schema": {
+              "$ref": "#/definitions/CombinedFeesResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/APIError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "APIError": {
+      "type": "object",
+      "title": "APIError represents an error response from REST API service.",
+      "properties": {
+        "error": {
+          "$ref": "#/definitions/Err"
+        },
+        "path": {
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "apiErrorSwagger",
+      "x-go-package": "github.com/mysteriumnetwork/go-rest/apierror"
+    },
+    "AccessPolicies": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accessPolicy"
+          },
+          "x-go-name": "Entries"
+        }
+      },
+      "x-go-name": "accessPolicyCollection",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/endpoints"
+    },
+    "AccessPolicy": {
+      "description": "AccessPolicy represents the access controls for proposal",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-go-name": "ID"
+        },
+        "source": {
+          "type": "string",
+          "x-go-name": "Source"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/market"
+    },
+    "ActivityStatsResponse": {
+      "type": "object",
+      "title": "ActivityStatsResponse reflects a node activity stats.",
+      "properties": {
+        "active_percent": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Active"
+        },
+        "online_percent": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Online"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "AuthRequest": {
+      "type": "object",
+      "title": "AuthRequest request used to authenticate to API.",
+      "properties": {
+        "password": {
+          "type": "string",
+          "x-go-name": "Password"
+        },
+        "username": {
+          "type": "string",
+          "x-go-name": "Username"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "AuthResponse": {
+      "type": "object",
+      "title": "AuthResponse response after successful authentication to API.",
+      "properties": {
+        "expires_at": {
+          "type": "string",
+          "x-go-name": "ExpiresAt",
+          "example": "2019-06-06T11:04:43.910035Z"
+        },
+        "token": {
+          "type": "string",
+          "x-go-name": "Token",
+          "example": "REDACTED_ROTATE_ME"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "BalanceDTO": {
+      "type": "object",
+      "title": "BalanceDTO holds balance information.",
+      "properties": {
+        "balance": {
+          "type": "string",
+          "x-go-name": "Balance"
+        },
+        "balance_tokens": {
+          "$ref": "#/definitions/Tokens"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "BeneficiaryAddressRequest": {
+      "description": "BeneficiaryAddressRequest address of the beneficiary",
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "x-go-name": "Address"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "BeneficiaryTxStatus": {
+      "type": "object",
+      "title": "BeneficiaryTxStatus settle with beneficiary transaction status.",
+      "properties": {
+        "change_to": {
+          "type": "string",
+          "x-go-name": "ChangeTo",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "error": {
+          "type": "string",
+          "x-go-name": "Error"
+        },
+        "state": {
+          "$ref": "#/definitions/SettleState"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "BugReport": {
+      "description": "BugReport represents user input when submitting an issue report",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/feedback"
+    },
+    "BuildInfoDTO": {
+      "type": "object",
+      "title": "BuildInfoDTO holds info about build.",
+      "properties": {
+        "branch": {
+          "type": "string",
+          "x-go-name": "Branch",
+          "example": "\u003cunknown\u003e"
+        },
+        "build_number": {
+          "type": "string",
+          "x-go-name": "BuildNumber",
+          "example": "dev-build"
+        },
+        "commit": {
+          "type": "string",
+          "x-go-name": "Commit",
+          "example": "\u003cunknown\u003e"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ChainSummary": {
+      "type": "object",
+      "title": "ChainSummary represents a response for token rewards.",
+      "properties": {
+        "chains": {
+          "x-go-name": "Chains"
+        },
+        "current_chain": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "CurrentChain"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ChangePasswordRequest": {
+      "type": "object",
+      "title": "ChangePasswordRequest request used to change API password.",
+      "properties": {
+        "new_password": {
+          "type": "string",
+          "x-go-name": "NewPassword"
+        },
+        "old_password": {
+          "type": "string",
+          "x-go-name": "OldPassword"
+        },
+        "username": {
+          "type": "string",
+          "x-go-name": "Username"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "CombinedFeesResponse": {
+      "type": "object",
+      "title": "CombinedFeesResponse represents transactor fees.",
+      "properties": {
+        "current": {
+          "$ref": "#/definitions/TransactorFees"
+        },
+        "hermes_percent": {
+          "type": "string",
+          "x-go-name": "HermesPercent"
+        },
+        "last": {
+          "$ref": "#/definitions/TransactorFees"
+        },
+        "server_time": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "ServerTime"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ConnectOptionsDTO": {
+      "description": "ConnectOptions holds tequilapi connect options",
+      "type": "object",
+      "properties": {
+        "dns": {
+          "$ref": "#/definitions/DNSOption"
+        },
+        "kill_switch": {
+          "description": "kill switch option restricting communication only through VPN",
+          "type": "boolean",
+          "x-go-name": "DisableKillSwitch",
+          "example": true
+        },
+        "proxy_port": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ProxyPort"
+        }
+      },
+      "x-go-name": "ConnectOptions",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ConnectionCreateFilter": {
+      "description": "ConnectionCreateFilter describes filter for the connection request to lookup\nfor a requested proposals based on specified params.",
+      "type": "object",
+      "properties": {
+        "country_code": {
+          "type": "string",
+          "x-go-name": "CountryCode"
+        },
+        "include_monitoring_failed": {
+          "type": "boolean",
+          "x-go-name": "IncludeMonitoringFailed"
+        },
+        "ip_type": {
+          "type": "string",
+          "x-go-name": "IPType"
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Providers"
+        },
+        "sort_by": {
+          "type": "string",
+          "x-go-name": "SortBy"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ConnectionCreateRequestDTO": {
+      "type": "object",
+      "title": "ConnectionCreateRequest request used to start a connection.",
+      "required": [
+        "consumer_id",
+        "provider_id"
+      ],
+      "properties": {
+        "connect_options": {
+          "$ref": "#/definitions/ConnectOptionsDTO"
+        },
+        "consumer_id": {
+          "description": "consumer identity",
+          "type": "string",
+          "x-go-name": "ConsumerID",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "filter": {
+          "$ref": "#/definitions/ConnectionCreateFilter"
+        },
+        "hermes_id": {
+          "description": "hermes identity",
+          "type": "string",
+          "x-go-name": "HermesID",
+          "example": "0x0000000000000000000000000000000000000003"
+        },
+        "provider_id": {
+          "description": "provider identity",
+          "type": "string",
+          "x-go-name": "ProviderID",
+          "example": "0x0000000000000000000000000000000000000002"
+        },
+        "service_type": {
+          "description": "service type. Possible values are \"openvpn\", \"wireguard\" and \"noop\"",
+          "type": "string",
+          "default": "openvpn",
+          "x-go-name": "ServiceType",
+          "example": "openvpn"
+        }
+      },
+      "x-go-name": "ConnectionCreateRequest",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ConnectionDTO": {
+      "type": "object",
+      "title": "ConnectionDTO holds full consumer connection details.",
+      "properties": {
+        "consumer_id": {
+          "type": "string",
+          "x-go-name": "ConsumerID",
+          "example": "0x00"
+        },
+        "hermes_id": {
+          "type": "string",
+          "x-go-name": "HermesID",
+          "example": "0x00"
+        },
+        "proposal": {
+          "$ref": "#/definitions/ProposalDTO"
+        },
+        "session_id": {
+          "type": "string",
+          "x-go-name": "SessionID",
+          "example": "4cfb0324-daf6-4ad8-448b-e61fe0a1f918"
+        },
+        "statistics": {
+          "$ref": "#/definitions/ConnectionStatisticsDTO"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "Connected"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ConnectionInfoDTO": {
+      "type": "object",
+      "title": "ConnectionInfoDTO holds partial consumer connection details.",
+      "properties": {
+        "consumer_id": {
+          "type": "string",
+          "x-go-name": "ConsumerID",
+          "example": "0x00"
+        },
+        "hermes_id": {
+          "type": "string",
+          "x-go-name": "HermesID",
+          "example": "0x00"
+        },
+        "proposal": {
+          "$ref": "#/definitions/ProposalDTO"
+        },
+        "session_id": {
+          "type": "string",
+          "x-go-name": "SessionID",
+          "example": "4cfb0324-daf6-4ad8-448b-e61fe0a1f918"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "Connected"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ConnectionStatisticsDTO": {
+      "type": "object",
+      "title": "ConnectionStatisticsDTO holds consumer connection statistics.",
+      "properties": {
+        "bytes_received": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "BytesReceived",
+          "example": 1024
+        },
+        "bytes_sent": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "BytesSent",
+          "example": 1024
+        },
+        "duration": {
+          "description": "connection duration in seconds",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Duration",
+          "example": 60
+        },
+        "spent_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "throughput_received": {
+          "description": "Download speed in bits per second",
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ThroughputReceived",
+          "example": 1024
+        },
+        "throughput_sent": {
+          "description": "Upload speed in bits per second",
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ThroughputSent",
+          "example": 1024
+        },
+        "tokens_spent": {
+          "type": "string",
+          "x-go-name": "TokensSpent",
+          "example": "500000"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ConnectionTrafficDTO": {
+      "type": "object",
+      "title": "ConnectionTrafficDTO holds consumer connection traffic information.",
+      "properties": {
+        "bytes_received": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "BytesReceived",
+          "example": 1024
+        },
+        "bytes_sent": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "BytesSent",
+          "example": 1024
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ConnectivityStatus": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/sessionConnectivityStatus"
+          },
+          "x-go-name": "Entries"
+        }
+      },
+      "x-go-name": "sessionConnectivityStatusCollection",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/endpoints"
+    },
+    "CreateBugReportResponse": {
+      "description": "CreateBugReportResponse response for bug report creation",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "identity": {
+          "type": "string",
+          "x-go-name": "Identity"
+        },
+        "ip": {
+          "type": "string",
+          "x-go-name": "Ip"
+        },
+        "ip_type": {
+          "type": "string",
+          "x-go-name": "IpType"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "node_country": {
+          "type": "string",
+          "x-go-name": "NodeCountry"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/feedback"
+    },
+    "CurrencyExchangeDTO": {
+      "type": "object",
+      "title": "CurrencyExchangeDTO the value of a given currency.",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Amount"
+        },
+        "currency": {
+          "type": "string",
+          "x-go-name": "Currency"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "CurrentPriceResponse": {
+      "type": "object",
+      "title": "CurrentPriceResponse represents the price.",
+      "properties": {
+        "price_per_gib": {
+          "description": "deprecated",
+          "type": "string",
+          "x-go-name": "PricePerGiB"
+        },
+        "price_per_gib_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "price_per_hour": {
+          "description": "deprecated",
+          "type": "string",
+          "x-go-name": "PricePerHour"
+        },
+        "price_per_hour_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "service_type": {
+          "type": "string",
+          "x-go-name": "ServiceType"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "DNSOption": {
+      "description": "DNSOption defines DNS server selection strategy for consumer",
+      "type": "string",
+      "x-go-package": "github.com/mysteriumnetwork/node/core/connection"
+    },
+    "DecreaseStakeRequest": {
+      "description": "DecreaseStakeRequest represents the decrease stake request",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string",
+          "x-go-name": "Amount"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "ID"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "DownloadNodeUIRequest": {
+      "description": "DownloadNodeUIRequest request for downloading NodeUI version",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "DownloadStatus": {
+      "description": "Status download status",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "x-go-name": "Err"
+        },
+        "progress_percent": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ProgressPct"
+        },
+        "status": {
+          "$ref": "#/definitions/dlStatus"
+        },
+        "tag": {
+          "type": "string",
+          "x-go-name": "Tag"
+        }
+      },
+      "x-go-name": "Status",
+      "x-go-package": "github.com/mysteriumnetwork/node/ui/versionmanager"
+    },
+    "EarningsDTO": {
+      "type": "object",
+      "title": "EarningsDTO holds earnings data.",
+      "properties": {
+        "earnings": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "earnings_total": {
+          "$ref": "#/definitions/Tokens"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "EarningsPerServiceResponse": {
+      "description": "EarningsPerServiceResponse contains information about earnings per service",
+      "type": "object",
+      "properties": {
+        "data_transfer_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "dvpn_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "monitoring_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "public_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "scraping_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "total_data_transfer_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "total_dvpn_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "total_monitoring_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "total_public_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "total_scraping_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "total_tokens": {
+          "$ref": "#/definitions/Tokens"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "EligibilityResponse": {
+      "description": "EligibilityResponse represents the eligibility response",
+      "type": "object",
+      "properties": {
+        "eligible": {
+          "type": "boolean",
+          "x-go-name": "Eligible"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/endpoints"
+    },
+    "EntertainmentEstimateResponse": {
+      "type": "object",
+      "title": "EntertainmentEstimateResponse represents estimated entertainment.",
+      "properties": {
+        "browsing_minutes": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "BrowsingMinutes"
+        },
+        "music_minutes": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "MusicMinutes"
+        },
+        "price_gib": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "PriceGiB"
+        },
+        "price_min": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "PriceMin"
+        },
+        "traffic_mb": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "TrafficMB"
+        },
+        "video_minutes": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "VideoMinutes"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "Err": {
+      "type": "object",
+      "title": "Err contains the error details.",
+      "properties": {
+        "code": {
+          "type": "string",
+          "x-go-name": "Code"
+        },
+        "detail": {
+          "type": "string",
+          "x-go-name": "Detail"
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/FieldError"
+          },
+          "x-go-name": "Fields"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/go-rest/apierror"
+    },
+    "FeesDTO": {
+      "description": "FeesDTO represents the transactor fees",
+      "type": "object",
+      "properties": {
+        "decreaseStake": {
+          "type": "string",
+          "x-go-name": "DecreaseStake"
+        },
+        "decrease_stake_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "hermes": {
+          "description": "deprecated - confusing name",
+          "type": "integer",
+          "format": "uint16",
+          "x-go-name": "Hermes"
+        },
+        "hermes_percent": {
+          "type": "string",
+          "x-go-name": "HermesPercent"
+        },
+        "registration": {
+          "type": "string",
+          "x-go-name": "Registration"
+        },
+        "registration_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "settlement": {
+          "type": "string",
+          "x-go-name": "Settlement"
+        },
+        "settlement_tokens": {
+          "$ref": "#/definitions/Tokens"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "FieldError": {
+      "type": "object",
+      "title": "FieldError contains the reason why a field failed validation.",
+      "properties": {
+        "code": {
+          "type": "string",
+          "x-go-name": "Code"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/go-rest/apierror"
+    },
+    "FilterPreset": {
+      "type": "object",
+      "title": "FilterPreset is a pre-defined proposal filter.",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "GatewaysResponse": {
+      "type": "object",
+      "title": "GatewaysResponse holds payment gateway details.",
+      "properties": {
+        "currencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Currencies"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "order_options": {
+          "$ref": "#/definitions/PaymentOrderOptions"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "HealthCheckDTO": {
+      "type": "object",
+      "title": "HealthCheckDTO holds API healthcheck.",
+      "properties": {
+        "build_info": {
+          "$ref": "#/definitions/BuildInfoDTO"
+        },
+        "process": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Process",
+          "example": 10449
+        },
+        "uptime": {
+          "type": "string",
+          "x-go-name": "Uptime",
+          "example": "25h53m33.540493171s"
+        },
+        "version": {
+          "type": "string",
+          "x-go-name": "Version",
+          "example": "0.0.6"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "HistoryType": {
+      "description": "HistoryType settlement history type",
+      "type": "string",
+      "x-go-package": "github.com/mysteriumnetwork/node/session/pingpong"
+    },
+    "IPDTO": {
+      "type": "object",
+      "title": "IPDTO describes IP metadata.",
+      "properties": {
+        "ip": {
+          "description": "public IP address",
+          "type": "string",
+          "x-go-name": "IP",
+          "example": "127.0.0.1"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityBeneficiaryResponseDTO": {
+      "type": "object",
+      "title": "IdentityBeneficiaryResponse represents the provider beneficiary address.",
+      "properties": {
+        "beneficiary": {
+          "type": "string",
+          "x-go-name": "Beneficiary"
+        },
+        "is_channel_address": {
+          "type": "boolean",
+          "x-go-name": "IsChannelAddress"
+        }
+      },
+      "x-go-name": "IdentityBeneficiaryResponse",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityCreateRequestDTO": {
+      "type": "object",
+      "title": "IdentityCreateRequest request used for new identity creation.",
+      "properties": {
+        "passphrase": {
+          "type": "string",
+          "x-go-name": "Passphrase"
+        }
+      },
+      "x-go-name": "IdentityCreateRequest",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityCurrentRequestDTO": {
+      "type": "object",
+      "title": "IdentityCurrentRequest request used for current identity remembering.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-go-name": "Address"
+        },
+        "passphrase": {
+          "type": "string",
+          "x-go-name": "Passphrase"
+        }
+      },
+      "x-go-name": "IdentityCurrentRequest",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityDTO": {
+      "type": "object",
+      "title": "IdentityDTO holds identity information.",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "balance": {
+          "description": "deprecated",
+          "type": "string",
+          "x-go-name": "Balance"
+        },
+        "balance_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "channel_address": {
+          "type": "string",
+          "x-go-name": "ChannelAddress"
+        },
+        "earnings": {
+          "type": "string",
+          "x-go-name": "Earnings"
+        },
+        "earnings_per_hermes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/EarningsDTO"
+          },
+          "x-go-name": "EarningsPerHermes"
+        },
+        "earnings_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "earnings_total": {
+          "type": "string",
+          "x-go-name": "EarningsTotal"
+        },
+        "earnings_total_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "hermes_id": {
+          "type": "string",
+          "x-go-name": "HermesID"
+        },
+        "id": {
+          "description": "identity in Ethereum address format",
+          "type": "string",
+          "x-go-name": "Address",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "registration_status": {
+          "type": "string",
+          "x-go-name": "RegistrationStatus"
+        },
+        "stake": {
+          "type": "string",
+          "x-go-name": "Stake"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityExportRequestDTO": {
+      "type": "object",
+      "title": "IdentityExportRequest is received in identity export endpoint.",
+      "properties": {
+        "identity": {
+          "type": "string",
+          "x-go-name": "Identity"
+        },
+        "newpassphrase": {
+          "type": "string",
+          "x-go-name": "NewPassphrase"
+        }
+      },
+      "x-go-name": "IdentityExportRequest",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityExportResponseDTO": {
+      "type": "object",
+      "title": "EncryptedKeyJSON represents response to IdentityExportRequest.",
+      "properties": {
+        "address": {
+          "type": "string",
+          "x-go-name": "Address"
+        },
+        "crypto": {
+          "$ref": "#/definitions/cryptoJSON"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "Id"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-name": "EncryptedKeyJSON",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityImportRequest": {
+      "type": "object",
+      "title": "IdentityImportRequest is received in identity import endpoint.",
+      "properties": {
+        "current_passphrase": {
+          "type": "string",
+          "x-go-name": "CurrentPassphrase"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          },
+          "x-go-name": "Data"
+        },
+        "new_passphrase": {
+          "type": "string",
+          "x-go-name": "NewPassphrase"
+        },
+        "set_default": {
+          "description": "Optional. Default values are OK.",
+          "type": "boolean",
+          "x-go-name": "SetDefault"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityRefDTO": {
+      "type": "object",
+      "title": "IdentityRefDTO represents unique identity reference.",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "identity in Ethereum address format",
+          "type": "string",
+          "x-go-name": "Address",
+          "example": "0x0000000000000000000000000000000000000001"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityRegisterRequestDTO": {
+      "description": "IdentityRegisterRequest represents the identity registration user input parameters",
+      "type": "object",
+      "properties": {
+        "beneficiary": {
+          "description": "Beneficiary: beneficiary to set during registration. Optional.",
+          "type": "string",
+          "x-go-name": "Beneficiary"
+        },
+        "fee": {
+          "description": "Fee: an agreed amount to pay for registration",
+          "type": "string",
+          "x-go-name": "Fee"
+        },
+        "referral_token": {
+          "description": "Token: referral token, if the user has one",
+          "type": "string",
+          "x-go-name": "ReferralToken"
+        }
+      },
+      "x-go-name": "IdentityRegisterRequest",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityRegistrationResponseDTO": {
+      "description": "IdentityRegistrationResponse represents registration status and needed data for registering of given identity",
+      "type": "object",
+      "properties": {
+        "registered": {
+          "description": "Returns true if identity is registered in payments smart contract",
+          "type": "boolean",
+          "x-go-name": "Registered"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "IdentityRegistrationResponse",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "IdentityUnlockRequestDTO": {
+      "type": "object",
+      "title": "IdentityUnlockRequest request used for identity unlocking.",
+      "properties": {
+        "passphrase": {
+          "type": "string",
+          "x-go-name": "Passphrase"
+        }
+      },
+      "x-go-name": "IdentityUnlockRequest",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "LatestReleaseResponse": {
+      "description": "LatestReleaseResponse latest release info",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ListIdentitiesResponse": {
+      "type": "object",
+      "title": "ListIdentitiesResponse holds list of identities.",
+      "properties": {
+        "identities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IdentityRefDTO"
+          },
+          "x-go-name": "Identities"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ListProposalFilterPresetsResponse": {
+      "type": "object",
+      "title": "ListProposalFilterPresetsResponse holds a list of proposal filter presets.",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FilterPreset"
+          },
+          "x-go-name": "Items"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ListProposalsCountiesResponse": {
+      "type": "object",
+      "title": "ListProposalsCountiesResponse holds number of proposals per country.",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "int64"
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ListProposalsResponse": {
+      "type": "object",
+      "title": "ListProposalsResponse holds list of proposals.",
+      "properties": {
+        "proposals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProposalDTO"
+          },
+          "x-go-name": "Proposals"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "LocalVersion": {
+      "description": "LocalVersion it's a local version with extra indicator if it is in use",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/ui/versionmanager"
+    },
+    "LocalVersionsResponse": {
+      "description": "LocalVersionsResponse local version response",
+      "type": "object",
+      "properties": {
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LocalVersion"
+          },
+          "x-go-name": "Versions"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "LocationDTO": {
+      "type": "object",
+      "title": "LocationDTO describes IP location metadata.",
+      "properties": {
+        "asn": {
+          "description": "Autonomous system number",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ASN",
+          "example": 62179
+        },
+        "city": {
+          "description": "Node City",
+          "type": "string",
+          "x-go-name": "City",
+          "example": "Vilnius"
+        },
+        "continent": {
+          "description": "Continent",
+          "type": "string",
+          "x-go-name": "Continent",
+          "example": "EU"
+        },
+        "country": {
+          "description": "Node Country",
+          "type": "string",
+          "x-go-name": "Country",
+          "example": "LT"
+        },
+        "ip": {
+          "description": "IP address",
+          "type": "string",
+          "x-go-name": "IP",
+          "example": "1.2.3.4"
+        },
+        "ip_type": {
+          "description": "IP type (data_center, residential, etc.)",
+          "type": "string",
+          "x-go-name": "IPType",
+          "example": "residential"
+        },
+        "isp": {
+          "description": "Internet Service Provider name",
+          "type": "string",
+          "x-go-name": "ISP",
+          "example": "Telia Lietuva, AB"
+        },
+        "region": {
+          "description": "Node Region",
+          "type": "string",
+          "x-go-name": "Region",
+          "example": "Vilnius region"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "MMNApiKeyRequest": {
+      "type": "object",
+      "title": "MMNApiKeyRequest request used to manage MMN's API key.",
+      "properties": {
+        "api_key": {
+          "type": "string",
+          "x-go-name": "ApiKey"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "MMNGrantVerificationResponse": {
+      "description": "MMNGrantVerificationResponse message received via redirect from mystnodes.com",
+      "type": "object",
+      "properties": {
+        "api_key": {
+          "type": "string",
+          "x-go-name": "ApiKey"
+        },
+        "is_eligible_for_free_registration": {
+          "type": "boolean",
+          "x-go-name": "IsEligibleForFreeRegistration"
+        },
+        "wallet_address": {
+          "type": "string",
+          "x-go-name": "WalletAddress"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "MMNLinkRedirectResponse": {
+      "description": "MMNLinkRedirectResponse claim link response",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "x-go-name": "Link"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "MigrationStatusResponse": {
+      "description": "MigrationStatusResponse represents status of the migration",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "MonitoringAgentResponse": {
+      "type": "object",
+      "title": "MonitoringAgentResponse reflects amount of connectivity statuses for each service_type.",
+      "properties": {
+        "error": {
+          "type": "string",
+          "x-go-name": "Error"
+        },
+        "statuses": {
+          "$ref": "#/definitions/MonitoringAgentStatuses"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "MonitoringAgentStatuses": {
+      "type": "object",
+      "title": "MonitoringAgentStatuses a object represent a [service_type][status]amount of statuses for each service type.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/core/node"
+    },
+    "MystnodesSSOLinkResponse": {
+      "description": "MystnodesSSOLinkResponse contains a link to initiate auth via mystnodes",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "x-go-name": "Link"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "NATType": {
+      "description": "NATType represents nat type",
+      "type": "string",
+      "x-go-package": "github.com/mysteriumnetwork/node/nat"
+    },
+    "NATTypeDTO": {
+      "description": "NATTypeDTO gives information about NAT type in terms of traversal capabilities",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "x-go-name": "Error"
+        },
+        "type": {
+          "$ref": "#/definitions/NATType"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "NodeStatusResponse": {
+      "description": "NodeStatusResponse a node status reflects monitoring agent POV on node availability",
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/Status"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "PageableDTO": {
+      "type": "object",
+      "title": "PageableDTO holds pagination information.",
+      "properties": {
+        "page": {
+          "description": "The current page of the items.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Page"
+        },
+        "page_size": {
+          "description": "Number of items per page.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PageSize"
+        },
+        "total_items": {
+          "description": "The total items.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TotalItems"
+        },
+        "total_pages": {
+          "description": "The last page of the items.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TotalPages"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "PaymentChannelDTO": {
+      "type": "object",
+      "title": "PaymentChannelDTO represents represents opened payment channel between identity and hermes.",
+      "properties": {
+        "beneficiary": {
+          "description": "Beneficiary - eth wallet address",
+          "type": "string",
+          "x-go-name": "Beneficiary"
+        },
+        "earnings": {
+          "description": "Current unsettled earnings",
+          "type": "string",
+          "x-go-name": "Earnings",
+          "example": "19449034049997187"
+        },
+        "earnings_total": {
+          "description": "Earnings of all history",
+          "type": "string",
+          "x-go-name": "EarningsTotal",
+          "example": "19449034049997187"
+        },
+        "hermes_id": {
+          "type": "string",
+          "x-go-name": "HermesID",
+          "example": "0x42a537D649d6853C0a866470f2d084DA0f73b5E4"
+        },
+        "id": {
+          "description": "Unique identifier of payment channel",
+          "type": "string",
+          "x-go-name": "ID",
+          "example": "0x8fc5f7a1794dc39c6837df10613bddf1ec9810503a50306a8667f702457a739a"
+        },
+        "owner_id": {
+          "type": "string",
+          "x-go-name": "OwnerID",
+          "example": "0x0000000000000000000000000000000000000001"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "PaymentOrderOptions": {
+      "description": "PaymentOrderOptions represents pilvytis payment order options",
+      "type": "object",
+      "properties": {
+        "minimum": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Minimum"
+        },
+        "suggested": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          },
+          "x-go-name": "Suggested"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "PaymentOrderRequest": {
+      "description": "PaymentOrderRequest holds order request details",
+      "type": "object",
+      "properties": {
+        "amount_usd": {
+          "type": "string",
+          "x-go-name": "AmountUSD",
+          "example": "20"
+        },
+        "country": {
+          "type": "string",
+          "x-go-name": "Country",
+          "example": "US"
+        },
+        "gateway_caller_data": {
+          "type": "object",
+          "x-go-name": "CallerData",
+          "example": {}
+        },
+        "myst_amount": {
+          "type": "string",
+          "x-go-name": "MystAmount",
+          "example": "3.14"
+        },
+        "pay_currency": {
+          "type": "string",
+          "x-go-name": "PayCurrency",
+          "example": "EUR"
+        },
+        "project_id": {
+          "type": "string",
+          "x-go-name": "ProjectID",
+          "example": "mysteriumvpn, mystnodes"
+        },
+        "state": {
+          "type": "string",
+          "x-go-name": "State",
+          "example": "MO"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "PaymentOrderResponse": {
+      "type": "object",
+      "title": "PaymentOrderResponse holds payment gateway order details.",
+      "properties": {
+        "chain_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ChainID"
+        },
+        "channel_address": {
+          "type": "string",
+          "x-go-name": "ChannelAddress"
+        },
+        "country": {
+          "type": "string",
+          "x-go-name": "Country"
+        },
+        "currency": {
+          "type": "string",
+          "x-go-name": "Currency"
+        },
+        "gateway_name": {
+          "type": "string",
+          "x-go-name": "GatewayName"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "ID"
+        },
+        "identity": {
+          "type": "string",
+          "x-go-name": "Identity"
+        },
+        "items_sub_total": {
+          "type": "string",
+          "x-go-name": "ItemsSubTotal"
+        },
+        "order_total": {
+          "type": "string",
+          "x-go-name": "OrderTotal"
+        },
+        "pay_amount": {
+          "type": "string",
+          "x-go-name": "PayAmount"
+        },
+        "pay_currency": {
+          "type": "string",
+          "x-go-name": "PayCurrency"
+        },
+        "public_gateway_data": {
+          "type": "object",
+          "x-go-name": "PublicGatewayData"
+        },
+        "receive_myst": {
+          "type": "string",
+          "x-go-name": "ReceiveMYST"
+        },
+        "state": {
+          "type": "string",
+          "x-go-name": "State"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        },
+        "tax_rate": {
+          "type": "string",
+          "x-go-name": "TaxRate"
+        },
+        "tax_sub_total": {
+          "type": "string",
+          "x-go-name": "TaxSubTotal"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "Price": {
+      "type": "object",
+      "title": "Price represents the service price.",
+      "properties": {
+        "currency": {
+          "type": "string",
+          "x-go-name": "Currency"
+        },
+        "per_gib": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "PerGiB"
+        },
+        "per_gib_tokens": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "per_hour": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "PerHour"
+        },
+        "per_hour_tokens": {
+          "$ref": "#/definitions/Tokens"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProposalDTO": {
+      "type": "object",
+      "title": "ProposalDTO holds service proposal details.",
+      "properties": {
+        "access_policies": {
+          "description": "AccessPolicies",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AccessPolicy"
+          },
+          "x-go-name": "AccessPolicies"
+        },
+        "compatibility": {
+          "description": "Compatibility level.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Compatibility"
+        },
+        "format": {
+          "description": "Proposal format.",
+          "type": "string",
+          "x-go-name": "Format"
+        },
+        "location": {
+          "$ref": "#/definitions/ServiceLocationDTO"
+        },
+        "price": {
+          "$ref": "#/definitions/Price"
+        },
+        "provider_id": {
+          "description": "provider who offers service",
+          "type": "string",
+          "x-go-name": "ProviderID",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "quality": {
+          "$ref": "#/definitions/Quality"
+        },
+        "service_type": {
+          "description": "type of service provider offers",
+          "type": "string",
+          "x-go-name": "ServiceType",
+          "example": "openvpn"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProviderConsumersCountResponse": {
+      "type": "object",
+      "title": "ProviderConsumersCountResponse reflects a number of unique consumers served during a period of time.",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProviderEarningsSeriesResponse": {
+      "type": "object",
+      "title": "ProviderEarningsSeriesResponse reflects a earnings series metrics during a period of time.",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProviderSeriesItem"
+          },
+          "x-go-name": "Data"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProviderSeriesItem": {
+      "description": "ProviderSeriesItem represents a general data series item",
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Timestamp"
+        },
+        "value": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProviderSession": {
+      "type": "object",
+      "title": "ProviderSession contains provided session information.",
+      "properties": {
+        "consumer_country": {
+          "type": "string",
+          "x-go-name": "ConsumerCountry"
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DurationSeconds"
+        },
+        "earnings": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "ID"
+        },
+        "service_type": {
+          "type": "string",
+          "x-go-name": "ServiceType"
+        },
+        "started_at": {
+          "type": "string",
+          "x-go-name": "StartedAt"
+        },
+        "transferred_bytes": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TransferredBytes"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProviderSessionsCountResponse": {
+      "type": "object",
+      "title": "ProviderSessionsCountResponse reflects a number of sessions during a period of time.",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProviderSessionsResponse": {
+      "type": "object",
+      "title": "ProviderSessionsResponse reflects a list of sessions metrics during a period of time.",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProviderSession"
+          },
+          "x-go-name": "Sessions"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProviderSessionsSeriesResponse": {
+      "type": "object",
+      "title": "ProviderSessionsSeriesResponse reflects a sessions data series metrics during a period of time.",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProviderSeriesItem"
+          },
+          "x-go-name": "Data"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProviderTransferredDataResponse": {
+      "type": "object",
+      "title": "ProviderTransferredDataResponse reflects a number of bytes transferred by provider during a period of time.",
+      "properties": {
+        "transferred_data_bytes": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Bytes"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ProviderTransferredDataSeriesResponse": {
+      "type": "object",
+      "title": "ProviderTransferredDataSeriesResponse reflects a transferred bytes data series metrics during a period of time.",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProviderSeriesItem"
+          },
+          "x-go-name": "Data"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "Quality": {
+      "type": "object",
+      "title": "Quality holds proposal quality metrics.",
+      "properties": {
+        "bandwidth": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Bandwidth"
+        },
+        "latency": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Latency"
+        },
+        "quality": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Quality"
+        },
+        "uptime": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Uptime"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "QualityInfoResponse": {
+      "type": "object",
+      "title": "QualityInfoResponse reflects a node quality.",
+      "properties": {
+        "quality": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Quality"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ReferralTokenResponse": {
+      "type": "object",
+      "title": "ReferralTokenResponse represents a response for referral token.",
+      "properties": {
+        "token": {
+          "type": "string",
+          "x-go-name": "Token"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "RegistrationPaymentResponse": {
+      "type": "object",
+      "title": "RegistrationPaymentResponse holds a registration payment order response.",
+      "properties": {
+        "paid": {
+          "type": "boolean",
+          "x-go-name": "Paid"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "RemoteVersion": {
+      "description": "RemoteVersion it's a version",
+      "type": "object",
+      "properties": {
+        "compatibility_url": {
+          "type": "string",
+          "x-go-name": "CompatibilityURL"
+        },
+        "is_pre_release": {
+          "type": "boolean",
+          "x-go-name": "IsPreRelease"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "release_notes": {
+          "type": "string",
+          "x-go-name": "ReleaseNotes"
+        },
+        "released_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "PublishedAt"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/ui/versionmanager"
+    },
+    "RemoteVersionsResponse": {
+      "description": "RemoteVersionsResponse local version response",
+      "type": "object",
+      "properties": {
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RemoteVersion"
+          },
+          "x-go-name": "Versions"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ReportIssueGithubResponse": {
+      "description": "ReportIssueGithubResponse response for github issue creation",
+      "type": "object",
+      "properties": {
+        "issue_id": {
+          "type": "string",
+          "x-go-name": "IssueID"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/endpoints"
+    },
+    "ServiceAccessPolicies": {
+      "description": "ServiceAccessPolicies represents the access controls for service start",
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "IDs"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ServiceInfoDTO": {
+      "type": "object",
+      "title": "ServiceInfoDTO represents running service information.",
+      "properties": {
+        "connection_statistics": {
+          "$ref": "#/definitions/ServiceStatisticsDTO"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "ID",
+          "example": "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+        },
+        "options": {
+          "description": "options with which service was started. Every service has a unique list of allowed options.",
+          "x-go-name": "Options",
+          "example": "{\"port\": 1123, \"protocol\": \"udp\"}"
+        },
+        "proposal": {
+          "$ref": "#/definitions/ProposalDTO"
+        },
+        "provider_id": {
+          "description": "provider identity",
+          "type": "string",
+          "x-go-name": "ProviderID",
+          "example": "0x0000000000000000000000000000000000000002"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "Running"
+        },
+        "type": {
+          "description": "service type. Possible values are \"openvpn\", \"wireguard\" and \"noop\"",
+          "type": "string",
+          "x-go-name": "Type",
+          "example": "openvpn"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ServiceListResponse": {
+      "type": "array",
+      "title": "ServiceListResponse represents a list of running services on the node.",
+      "items": {
+        "$ref": "#/definitions/ServiceInfoDTO"
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ServiceLocationDTO": {
+      "type": "object",
+      "title": "ServiceLocationDTO holds service location metadata.",
+      "properties": {
+        "asn": {
+          "description": "Autonomous System Number",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ASN",
+          "example": 1
+        },
+        "city": {
+          "type": "string",
+          "x-go-name": "City",
+          "example": "Amsterdam"
+        },
+        "continent": {
+          "type": "string",
+          "x-go-name": "Continent",
+          "example": "EU"
+        },
+        "country": {
+          "type": "string",
+          "x-go-name": "Country",
+          "example": "NL"
+        },
+        "ip_type": {
+          "type": "string",
+          "x-go-name": "IPType",
+          "example": "residential"
+        },
+        "isp": {
+          "type": "string",
+          "x-go-name": "ISP",
+          "example": "Telia Lietuva, AB"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ServiceStartRequestDTO": {
+      "type": "object",
+      "title": "ServiceStartRequest request used to start a service.",
+      "required": [
+        "provider_id",
+        "type"
+      ],
+      "properties": {
+        "access_policies": {
+          "$ref": "#/definitions/ServiceAccessPolicies"
+        },
+        "options": {
+          "description": "service options. Every service has a unique list of allowed options.",
+          "x-go-name": "Options",
+          "example": "{\"port\": 1123, \"protocol\": \"udp\"}"
+        },
+        "provider_id": {
+          "description": "provider identity",
+          "type": "string",
+          "x-go-name": "ProviderID",
+          "example": "0x0000000000000000000000000000000000000002"
+        },
+        "type": {
+          "description": "service type. Possible values are \"openvpn\", \"wireguard\" and \"noop\"",
+          "type": "string",
+          "x-go-name": "Type",
+          "example": "openvpn"
+        }
+      },
+      "x-go-name": "ServiceStartRequest",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "ServiceStatisticsDTO": {
+      "description": "ServiceStatisticsDTO shows the successful and attempted connection count",
+      "type": "object",
+      "properties": {
+        "attempted": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Attempted"
+        },
+        "successful": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Successful"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "SessionDTO": {
+      "type": "object",
+      "title": "SessionDTO represents the session object.",
+      "properties": {
+        "bytes_received": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "BytesReceived",
+          "example": 1024
+        },
+        "bytes_sent": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "BytesSent",
+          "example": 1024
+        },
+        "consumer_country": {
+          "type": "string",
+          "x-go-name": "ConsumerCountry",
+          "example": "NL"
+        },
+        "consumer_id": {
+          "type": "string",
+          "x-go-name": "ConsumerID",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "created_at": {
+          "type": "string",
+          "x-go-name": "CreatedAt",
+          "example": "2019-06-06T11:04:43.910035Z"
+        },
+        "direction": {
+          "type": "string",
+          "x-go-name": "Direction",
+          "example": "Consumed"
+        },
+        "duration": {
+          "description": "duration in seconds",
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "Duration",
+          "example": 120
+        },
+        "hermes_id": {
+          "type": "string",
+          "x-go-name": "HermesID",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "ID",
+          "example": "4cfb0324-daf6-4ad8-448b-e61fe0a1f918"
+        },
+        "ip_type": {
+          "type": "string",
+          "x-go-name": "IPType",
+          "example": "residential"
+        },
+        "provider_country": {
+          "type": "string",
+          "x-go-name": "ProviderCountry",
+          "example": "US"
+        },
+        "provider_id": {
+          "type": "string",
+          "x-go-name": "ProviderID",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "service_type": {
+          "type": "string",
+          "x-go-name": "ServiceType",
+          "example": "openvpn"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "Completed"
+        },
+        "tokens": {
+          "type": "string",
+          "x-go-name": "Tokens",
+          "example": "500000"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "SessionListResponse": {
+      "type": "object",
+      "title": "SessionListResponse defines session list representable as json.",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SessionDTO"
+          },
+          "x-go-name": "Items"
+        },
+        "page": {
+          "description": "The current page of the items.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Page"
+        },
+        "page_size": {
+          "description": "Number of items per page.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PageSize"
+        },
+        "total_items": {
+          "description": "The total items.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TotalItems"
+        },
+        "total_pages": {
+          "description": "The last page of the items.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TotalPages"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "SessionStatsAggregatedResponse": {
+      "type": "object",
+      "title": "SessionStatsAggregatedResponse defines aggregated sessions stats response as json.",
+      "properties": {
+        "stats": {
+          "$ref": "#/definitions/SessionStatsDTO"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "SessionStatsDTO": {
+      "type": "object",
+      "title": "SessionStatsDTO represents the session aggregated statistics.",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count"
+        },
+        "count_consumers": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "CountConsumers"
+        },
+        "sum_bytes_received": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "SumBytesReceived"
+        },
+        "sum_bytes_sent": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "SumBytesSent"
+        },
+        "sum_duration": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "SumDuration"
+        },
+        "sum_tokens": {
+          "type": "string",
+          "x-go-name": "SumTokens"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "SessionStatsDailyResponse": {
+      "type": "object",
+      "title": "SessionStatsDailyResponse defines session stats representable as json.",
+      "properties": {
+        "items": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/SessionStatsDTO"
+          },
+          "x-go-name": "Items"
+        },
+        "stats": {
+          "$ref": "#/definitions/SessionStatsDTO"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "SettleRequestDTO": {
+      "description": "SettleRequest represents the request to settle hermes promises",
+      "type": "object",
+      "properties": {
+        "hermes_id": {
+          "description": "Deprecated",
+          "type": "string",
+          "x-go-name": "HermesID"
+        },
+        "hermes_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "HermesIDs"
+        },
+        "provider_id": {
+          "type": "string",
+          "x-go-name": "ProviderID"
+        }
+      },
+      "x-go-name": "SettleRequest",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "SettleState": {
+      "description": "SettleState represents the state of settle with beneficiary transaction",
+      "type": "string",
+      "x-go-package": "github.com/mysteriumnetwork/node/core/beneficiary"
+    },
+    "SettlementDTO": {
+      "type": "object",
+      "title": "SettlementDTO represents the settlement object.",
+      "properties": {
+        "amount": {
+          "type": "string",
+          "x-go-name": "Amount",
+          "example": "500000"
+        },
+        "beneficiary": {
+          "type": "string",
+          "x-go-name": "Beneficiary",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "block_explorer_url": {
+          "type": "string",
+          "x-go-name": "BlockExplorerURL",
+          "example": "https://example.com"
+        },
+        "channel_address": {
+          "type": "string",
+          "x-go-name": "ChannelAddress",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "error": {
+          "type": "string",
+          "x-go-name": "Error",
+          "example": "internal server error"
+        },
+        "fees": {
+          "type": "string",
+          "x-go-name": "Fees",
+          "example": "500000"
+        },
+        "hermes_id": {
+          "type": "string",
+          "x-go-name": "HermesID",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "is_withdrawal": {
+          "type": "boolean",
+          "x-go-name": "IsWithdrawal",
+          "example": false
+        },
+        "provider_id": {
+          "type": "string",
+          "x-go-name": "ProviderID",
+          "example": "0x0000000000000000000000000000000000000001"
+        },
+        "settled_at": {
+          "type": "string",
+          "x-go-name": "SettledAt",
+          "example": "2019-06-06T11:04:43.910035Z"
+        },
+        "tx_hash": {
+          "type": "string",
+          "x-go-name": "TxHash",
+          "example": "0x20c070a9be65355adbd2ba479e095e2e8ed7e692596548734984eab75d3fdfa5"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "SettlementListResponse": {
+      "type": "object",
+      "title": "SettlementListResponse defines settlement list representable as json.",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SettlementDTO"
+          },
+          "x-go-name": "Items"
+        },
+        "page": {
+          "description": "The current page of the items.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Page"
+        },
+        "page_size": {
+          "description": "Number of items per page.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PageSize"
+        },
+        "total_items": {
+          "description": "The total items.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TotalItems"
+        },
+        "total_pages": {
+          "description": "The last page of the items.",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TotalPages"
+        },
+        "withdrawal_total": {
+          "type": "string",
+          "x-go-name": "WithdrawalTotal"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "Status": {
+      "description": "Status enum",
+      "type": "string",
+      "x-go-package": "github.com/mysteriumnetwork/node/core/monitoring"
+    },
+    "SwitchNodeUIRequest": {
+      "description": "SwitchNodeUIRequest request for switching NodeUI version",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "x-go-name": "Version"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "TermsRequest": {
+      "type": "object",
+      "title": "TermsRequest object is accepted by terms endpoints.",
+      "properties": {
+        "agreed_consumer": {
+          "type": "boolean",
+          "x-go-name": "AgreedConsumer",
+          "example": false
+        },
+        "agreed_provider": {
+          "type": "boolean",
+          "x-go-name": "AgreedProvider",
+          "example": false
+        },
+        "agreed_version": {
+          "type": "string",
+          "x-go-name": "AgreedVersion",
+          "example": "0.0.27"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "TermsResponse": {
+      "type": "object",
+      "title": "TermsResponse object is returned by terms endpoints.",
+      "properties": {
+        "agreed_consumer": {
+          "type": "boolean",
+          "x-go-name": "AgreedConsumer",
+          "example": false
+        },
+        "agreed_provider": {
+          "type": "boolean",
+          "x-go-name": "AgreedProvider",
+          "example": false
+        },
+        "agreed_version": {
+          "type": "string",
+          "x-go-name": "AgreedVersion",
+          "example": "0.0.27"
+        },
+        "current_version": {
+          "type": "string",
+          "x-go-name": "CurrentVersion",
+          "example": "0.0.27"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "TokenRewardAmount": {
+      "type": "object",
+      "title": "TokenRewardAmount represents a response for token rewards.",
+      "properties": {
+        "amount": {
+          "type": "string",
+          "x-go-name": "Amount"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "Tokens": {
+      "description": "Tokens a common response for ethereum blockchain monetary amount",
+      "type": "object",
+      "properties": {
+        "ether": {
+          "type": "string",
+          "x-go-name": "Ether"
+        },
+        "human": {
+          "type": "string",
+          "x-go-name": "Human"
+        },
+        "wei": {
+          "type": "string",
+          "x-go-name": "Wei"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "TransactorFees": {
+      "type": "object",
+      "title": "TransactorFees represents transactor fees.",
+      "properties": {
+        "decrease_stake": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "registration": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "settlement": {
+          "$ref": "#/definitions/Tokens"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "ValidUntil"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "UI": {
+      "description": "UI ui information",
+      "type": "object",
+      "properties": {
+        "bundled_version": {
+          "type": "string",
+          "x-go-name": "BundledVersion"
+        },
+        "used_version": {
+          "type": "string",
+          "x-go-name": "UsedVersion"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "UserReport": {
+      "description": "UserReport represents user input when submitting an issue report",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "user_id": {
+          "type": "string",
+          "x-go-name": "UserId"
+        },
+        "user_type": {
+          "type": "string",
+          "x-go-name": "UserType"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/feedback"
+    },
+    "WithdrawRequestDTO": {
+      "type": "object",
+      "title": "WithdrawRequest represents the request to withdraw earnings to l1.",
+      "properties": {
+        "amount": {
+          "type": "string",
+          "x-go-name": "Amount"
+        },
+        "beneficiary": {
+          "type": "string",
+          "x-go-name": "Beneficiary"
+        },
+        "from_chain_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "FromChainID"
+        },
+        "hermes_id": {
+          "type": "string",
+          "x-go-name": "HermesID"
+        },
+        "provider_id": {
+          "type": "string",
+          "x-go-name": "ProviderID"
+        },
+        "to_chain_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ToChainID"
+        }
+      },
+      "x-go-name": "WithdrawRequest",
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "accessPolicy": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accessRule"
+          },
+          "x-go-name": "Allow"
+        },
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "ID"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/endpoints"
+    },
+    "accessRule": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "value": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/endpoints"
+    },
+    "cipherparamsJSON": {
+      "type": "object",
+      "properties": {
+        "iv": {
+          "type": "string",
+          "x-go-name": "IV"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "configPayload": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "additionalProperties": {},
+          "x-go-name": "Data",
+          "example": {
+            "data": {
+              "access-policy": {
+                "list": "mysterium"
+              },
+              "openvpn": {
+                "port": 5522
+              }
+            }
+          }
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/endpoints"
+    },
+    "cryptoJSON": {
+      "type": "object",
+      "properties": {
+        "cipher": {
+          "type": "string",
+          "x-go-name": "Cipher"
+        },
+        "cipherparams": {
+          "$ref": "#/definitions/cipherparamsJSON"
+        },
+        "ciphertext": {
+          "type": "string",
+          "x-go-name": "CipherText"
+        },
+        "kdf": {
+          "type": "string",
+          "x-go-name": "KDF"
+        },
+        "kdfparams": {
+          "type": "object",
+          "additionalProperties": {},
+          "x-go-name": "KDFParams"
+        },
+        "mac": {
+          "type": "string",
+          "x-go-name": "MAC"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "dlStatus": {
+      "type": "string",
+      "x-go-package": "github.com/mysteriumnetwork/node/ui/versionmanager"
+    },
+    "sessionConnectivityStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Code"
+        },
+        "created_at_utc": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "CreatedAtUTC"
+        },
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "peer_address": {
+          "type": "string",
+          "x-go-name": "PeerAddress"
+        },
+        "session_id": {
+          "type": "string",
+          "x-go-name": "SessionID"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/endpoints"
+    }
+  }
+}

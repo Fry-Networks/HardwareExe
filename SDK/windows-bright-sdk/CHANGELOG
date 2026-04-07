@@ -1,0 +1,855 @@
+Bright SDK for Windows CHANGELOG
+
+## 1.562.221
+- Consent screen updates
+- Small fixes and improvements
+
+## 1.537.276
+- Regular update. Small fixes and improvements
+
+## 1.528.654
+- Regular update. Small fixes and improvements
+
+## 1.519.598
+- Regular update. Small fixes and improvements
+
+## 1.512.416
+- Regular update. Small fixes and improvements
+
+## 1.505.158
+- Added console warning message when an appid is not registered
+
+## 1.489.750
+- Improved connection to metrics servers
+
+## 1.474.630
+- Fixed double trigger of dialog visibility events for c/c++.
+- Choice change callback is now triggered when the dialog is dissmised by clicking "X"
+
+## 1.467.712
+- Removed consent button text customization
+- Added consent dialog events
+- Forced same consent button styles for accept and decline buttons
+- Samples updated
+
+## 1.463.822
+- Consent screen and the tray app update for AV companies compliance
+
+## 1.461.250
+- Regular update. Small fixes and improvements
+
+## 1.454.988
+- Regular update. Small fixes and improvements
+
+## 1.451.47
+- Regular update. Small fixes and improvements
+
+## 1.448.221
+- Regular update. Small fixes and improvements
+
+## 1.445.458
+- Regular update. Small fixes and improvements
+
+## 1.445.335
+- BREAKING CHANGE: API method OptIn renamed to ExternalOptIn
+
+## 1.442.556
+- Regular update. Small fixes and improvements
+
+## 1.435.904
+- Added README.txt file to the SDK's data folder to meet the requirements of the anti-virus companies.
+
+## 1.429.308
+- Added app name color setting
+
+## 1.426.400
+- Regular update. Small fixes and improvements
+
+## 1.421.692
+- Regular update. Small fixes and improvements
+
+## 1.418.267
+- Code signing certificate updated
+
+## 1.416.595
+- Regular update. Small fixes and improvements
+
+## 1.415.238
+- Regular update. Small fixes and improvements
+
+## 1.414.790
+- Regular update. Small fixes and improvements
+
+## 1.411.933
+- Regular update. Small fixes and improvements
+
+## 1.408.47
+- Fixed encoding in the native API for the agree and disagree buttons text
+
+## 1.407.240
+- Fixed CN localization
+
+## 1.406.299
+- Regular update. Small fixes and improvements
+
+## 1.403.214
+- stability improvements
+- Updated Privacy Policy and EULA links
+
+## 1.398.639
+- Regular update. Small fixes and improvements
+
+## 1.396.689
+- stability improvements
+
+## 1.395.152
+- stability improvements
+
+## 1.390.766
+- Regular update. Small fixes and improvements
+
+## 1.379.314
+- fixed bug with CPU/MEM load monitoring
+
+## 1.378.381
+- server connection stability improvements
+
+## 1.374.793
+- critical fixes
+
+## 1.372.699
+- fixes and improvements
+
+## 1.371.271
+- fixes and improvements
+
+## 1.367.864
+- fixes and improvements
+
+## 1.363.757
+- fixes and improvements
+
+## 1.358.215
+- fixes and improvements
+
+## 1.351.6
+- fixed an exception that occurred in rare cases when terminating the SDK
+
+## 1.349.193
+- funnel metrics for campaigns
+
+## 1.346.316
+- improved algorithm for maintaining a stable network connection
+
+## 1.344.20
+- fixes and improvements
+
+## 1.341.650
+- new 'campaign' setting added. It can be used for the further breakdown of the existing app ID to monitor the statistics separately
+
+## 1.339.765
+- internal network usage optimization
+
+## 1.337.204
+- additional metrics for tracking network errors
+
+## 1.335.490
+- fix in internal integration API
+
+## 1.334.822
+- internal improvement in server connectivity
+
+## 1.334.236
+- fix IP address of a destination website not returned on Data Collector request
+
+## 1.332.83
+- instant callback invocation on setting choice changed handler is now synchronous
+
+## 1.330.639
+- fixed race condition in SDK cleanup
+
+## 1.329.519
+- add service stop/start/startmode control apis
+- choice change callback is now invoked only after service install/uninstall has been initiated internally
+
+## 1.327.938
+- improved logging
+- add service status notification and recovery apis
+- change tray icon default title to Web Indexing Service
+- tray icon info window, on click, opens Bright Data info site in browser
+- fix tray icon occasionally not starting
+- fix opt-out not working in certain scenarios
+- fix consent screen translation inconsistencies
+- fix clear choice not removing Bright Data service
+
+## 1.324.391
+- fixes and improvements
+
+## 1.323.197
+- fixes and improvements
+
+## 1.322.233
+- auxiliary network traffic decreased
+
+## 1.321.50
+- fixes and improvements
+
+## 1.317.779
+- fixes and improvements
+
+## 1.317.234
+- auto_agree handling changed
+
+## 1.315.607
+- fixed errors in native API
+
+## 1.312.899
+- fixes and improvements
+
+## 1.312.357
+- fix crash on non-ascii paths
+
+## 1.312.138
+- remote update fixed
+- add support writing to ProgramData instead of local dir
+- fixes and improvements
+
+## 1.308.397
+- added monitoring of system events
+
+## 1.306.573
+- new .NET API beta
+
+## 1.305.614
+- fix multiple connections if IP was changed
+
+## 1.304.951
+- improved statistics collection
+- add 'Close application' button text (decline consent)
+- SDK duplication protection
+
+## 1.303.70
+- tray icon not hidden anymore when host app is running
+
+## 1.301.264
+- SDK duplication protection
+
+## 1.300.381
+- new tray icon
+
+## 1.295.661
+- improved statistics collection
+
+## 1.295.523
+- security improvements
+
+## 1.294.223
+- fix tray icon activation
+
+## 1.292.835
+- fix consent screen shown when service already installed
+
+## 1.292.453
+- fixes and improvements
+
+## 1.292.67
+
+## 1.291.876
+- config file for consent screen customization
+
+## 1.290.920
+- remotely configurable tray icon
+
+## 1.289.605
+- improved consent disclaimer text
+
+## 1.288.429
+- new consent screen
+
+## 1.288.331
+- fixes and improvements 
+
+## 1.287.53
+- add lum_sdk_set_appid to allow early appid setting before init
+
+## 1.285.787
+- expose an instance based (new) api for SDK on lum_sdk.dll
+
+## 1.285.679
+- add lum_sdk_set_choice_not_peer api for allowing users to opt-out when the uncheck the SDK checkbox
+
+## 1.284.775
+- add 64bit managed dll (lum_sdk_managed_x64.dll)
+
+## 1.284.414
+- consent loading time improvements
+
+## 1.283.122
+- French and German languages
+- consent layout improvements
+
+## 1.281.640
+- consent loading time improvements
+
+## 1.280.766
+- peer code improvements
+- add channel support
+
+## 1.280.597
+- peer code improvements
+- add RAD Studio 11.0 Delphi sample
+
+## 1.276.947
+- peer code improvements
+- disable sdk completely in blocked countries
+
+## 1.273.731
+- peer code improvements
+
+## 1.272.311
+- add dialog flavour api option
+
+## 1.270.958
+- peer code improvements
+
+## 1.270.630
+- peer code improvements
+
+## 1.265.382
+- improve network connectivity
+
+## 1.263.563
+- fix 'X' close button hitbox
+
+## 1.263.332
+- improve translations
+
+## 1.262.989
+- add auto update notification to user consent
+- add 'X' close button to user consent
+
+## 1.261.864
+- peer code improvements
+
+## 1.260.260
+- peer code improvements
+
+## 1.259.882
+- peer code improvements
+
+## 1.257.945
+- remove obsolete peer code (net_svc)
+- remove peer pii: hostname and username
+
+## 1.254.283
+- embedded peer bug fixes
+
+## 1.251.351
+- embedded peer bug fixes
+
+## 1.249.897
+
+## 1.249.239
+
+## 1.249.145
+- embedded peer bug fixes
+
+## 1.247.388
+- embedded peer bug fixes
+
+## 1.246.561
+- embedded peer bug fixes
+
+## 1.243.658
+- embedded peer bug fixes
+
+## 1.243.114
+- embedded peer bug fixes
+
+## 1.242.856
+- embedded peer bug fixes
+
+## 1.242.353
+- embedded peer bug fixes
+
+## 1.240.55
+- embedded peer bug fixes
+
+## 1.239.868
+- embedded peer bug fixes
+
+## 1.239.428
+- fix crash when luminati dir missing
+- embedded peer bug fixes
+
+## 1.238.509
+- embedded peer bug fixes
+
+## 1.237.813
+- improve peer idle logic
+
+## 1.237.241
+- improve appid validation when running net_updater
+- update consent screen text
+- fix bug with implicit wpf data binding modes
+
+## 1.234.944
+- testing version
+
+## 1.234.432
+- fix updated dialog wait race condition
+
+## 1.233.921
+- add updated tech spec notification to users (Apr-21)
+- update consent screen
+- remove obsolete apis init_wait, init_autorun, run, run_wait
+- remove obsolete samples for vb6, borland compiler and not net_updater monitor mode
+
+## 1.231.944
+- testing version
+
+## 1.230.214
+- improve monitoring of net_updater not running on partner app start
+
+## 1.229.775
+- fix reinstalling net_updater service if missing on partner app calling get_choice or init_ui
+
+## 1.224.33
+- fix multiple UAC dialogs after peer opt-in
+- fix eventloop hang on shutdown
+
+## 1.223.116
+- log and conf encryption
+- embedded peer enabled (beta)
+
+## 1.219.797
+- embedded peer bug fixes and improvements (alpha - disabled)
+
+## 1.214.693
+- embedded peer bug fixes and improvements (alpha - disabled)
+
+## 1.211.371
+- add --dlg-set-peer-txt to net_updater command line options
+- rework opt-in options
+- rework opt-out options (remove obsolete options)
+
+## 1.210.524
+- fix memory corruption bugs
+
+## 1.207.456
+- fix consent sync bug
+- fix service install path
+- improved consent dialog layout
+- set peer_txt api not deprecated
+
+## 1.206.234
+- fix crash win7 32bit using unreliable winapi
+
+## 1.205.870
+- fix uuid preference order
+- add dll verification and validation code
+
+## 1.204.987
+- remove debug logging
+
+## 1.204.449
+- delay load sdk dll on net_updater startup
+- fix bug causing multiple net_updater install invocations on choice change
+
+## 1.204.178
+- improve arg parsing
+
+## 1.203.698
+- rollback to version 1.199.726
+
+## 1.200.408
+- fix handling sdk install in non-ascii paths
+
+## 1.199.726
+- fix crashes related to thread safe collection access
+- fix crash in embedded dll loading
+
+## 1.198.824
+- fix bug causing net_updater service to timeout on windows startup
+
+## 1.197.630
+- fix consent bug causing invalid state
+- fix crashes
+
+## 1.195.695
+- fix user consent related to GDPR compliance
+
+## 1.194.123
+- fix crash on win7 generating id
+
+## 1.193.803
+- fix bug causing id duplication
+- embedded peer bug fixes and improvements
+
+## 1.193.376
+- embedded peer bug fixes and improvements
+
+## 1.193.141
+- embedded peer bug fixes and improvements
+
+## 1.192.887
+- embedded peer bug fixes and improvements
+
+## 1.191.918
+- embedded peer (alpha) - disabled
+
+## 1.190.642
+- improve analytics reporting
+
+## 1.185.436
+- use TLSv1.2 on all connections
+
+## 1.182.660
+- fix log open crash
+- fix handling missing hostname
+- fix log write crash
+
+## 1.179.532
+- add lum_sdk_not_peer_txt.NO_THANK_YOU option
+- add log rotate
+- fix log dir cleanup
+
+## 1.178.821
+- add api.set_benefit_txt
+
+## 1.178.282
+- fix error reporting
+
+## 1.176.364
+- fixed handle UAC when SDK is first inited after application install
+
+## 1.174.512
+- dialog adjustment
+
+## 1.174.6
+- fix logging bug
+- fix logoff behavior bug
+
+## 1.173.589
+- improve network connectivity
+
+## 1.172.289
+
+## 1.171.800
+
+## 1.171.785
+- improve reporting
+
+## 1.170.947
+
+## 1.170.92
+
+## 1.169.408
+- improve reporting
+
+## 1.167.491
+- fix dlg_pos.center_sceen
+- fix net_updater crashes
+
+## 1.167.209
+- improve error/crash handling
+
+## 1.166.833
+- fix crash missing local appdata
+
+## 1.166.710
+- fix net_updater analytics (perr) sending
+
+## 1.166.258
+- fix crash log write (concurrency)
+
+## 1.166.107
+- fix update
+
+## 1.165.888
+- improve reporting
+- remove reading of installed antiviruses
+- add showing dialog before installing net_updater
+- install/uninstall net_updater on user opt-in/out
+
+## 1.156.824
+
+## 1.156.145
+- fix net_updater install error (make DisplayName unique)
+
+## 1.153.124
+- add persistent install_id
+
+## 1.148.748
+- fix text bug in new dialog
+- remove deprecated apis exports
+
+## 1.148.455
+- new user dialog (default)
+- fix samples
+- deprecate old apis (dlg_size, dlg_type, txt_type, peer_txt)
+
+## 1.145.909
+- improve files cleanup
+
+## 1.145.666
+- fix bug net_updater service running when no choice
+- fix files cleanup on uninstall
+
+## 1.143.86
+- Improve statistics reporting
+
+## 1.141.414
+- Improve error reporting
+
+## 1.139.517
+- internal bugs/fixes
+
+## 1.139.408
+- internal bugs/fixes
+
+## 1.135.140
+- internal bugs/fixes
+
+## 1.129.29
+- Fixed crash on xp
+
+## 1.124.948
+- internal bugs/fixes
+
+## 1.123.953
+- internal bugs/fixes
+
+## 1.123.479
+- Fix start race condition problem
+
+## 1.123.330
+- internal bugs/fixes
+
+## 1.123.274
+- internal bugs/fixes
+
+## 1.122.967
+- support camp option
+
+## 1.121.860
+- Improve stability of net_updater service start process
+
+## 1.120.915
+- internal bugs/fixes
+
+## 1.120.227
+- internal bugs/fixes
+
+## 1.119.450
+- improve service start flow
+
+## 1.118.870
+- internal bugs/fixes
+
+## 1.118.789
+- fix exe running on windows XP
+- mark windows XP as unsupported
+
+## 1.116.816
+- internal bugs/fixes
+
+## 1.116.608
+- improve install metric collection
+
+## 1.116.536
+- improve install metric collection
+
+## 1.116.411
+- improve install metric collection
+
+## 1.115.519
+- internal bugs/fixes
+
+## 1.115.292
+- internal bugs/fixes
+
+## 1.115.268
+- improve install metric collection
+
+## 1.114.604
+- internal bugs/fixes
+
+## 1.114.416
+- internal bugs/fixes
+
+## 1.114.213
+- internal bugs/fixes
+
+## 1.114.41
+- internal bugs/fixes
+
+## 1.113.122
+- internal bugs/fixes
+
+## 1.112.948
+- internal bugs/fixes
+
+## 1.112.932
+- internal bugs/fixes
+
+## 1.112.426
+- internal bugs/fixes
+
+## 1.112.388
+- internal bugs/fixes
+
+## 1.112.259
+- add .NET4.5 installation attempt when missing
+
+## 1.111.228
+- internal bugs/fixes
+
+## 1.111.76
+- improve install metric collection
+
+## 1.110.776
+- improve install metric collection
+
+## 1.110.540
+- improve install metric collection
+
+## 1.109.706
+- fix bugs
+
+## 1.109.649
+- fix bugs/crashes
+
+## 1.109.603
+- improve install metric collection
+
+## 1.107.653
+- fix bugs/crashes
+
+## 1.107.45
+- fix bugs/crashes
+
+## 1.106.982
+- fix bugs/crashes (due to flow control changes)
+
+## 1.105.162
+- fix bugs in net_svc update/stop/start flow control
+
+## 1.104.473
+- improve net_updater flow reporting
+
+## 1.101.793
+- fix crash on open tos link
+- add Subscription and Buy options to not_peer button
+- uninit sdk when user selects not be a peer
+
+## 1.101.337
+- fix bug in lum_sdk_set_dlg_pos before calling init
+
+## 1.101.274
+- add lum_sdk_set_dlg_pos_type allow setting dialog start open location
+- add lum_sdk_set_dlg_pos allows setting dialog top/left position
+- fix net_updater signing bug
+
+## 1.100.571
+- add Chinese translations
+- add lum_sdk_set_dlg_type allow selecting small fixed size (300x250) dialog
+- add lum_sdk_set_txt_type allow selecting alternate text option use 'bandwidth' instead of 'idle resource'
+- add lum_sdk_set_txt_culture allow selecting dialog text language other than system default
+
+## 1.100.157
+- net_updater: use appid for unique service name, add appid to --uninstall args
+- fix .NET versions detection bug
+- fix crash in Task schedualer
+
+## 1.98.150
+- add Spanish, Italian and Portuguese translations
+
+## 1.95.199
+- add net_updater32.exe|net_updater64.exe to allow install/uninstall/run of sdk in monitor mode as windows service
+- add net_updater usage sample
+- add .net wpf installation validation sanity test to avoid rare crashes
+
+## 1.92.264
+- fix crash on invalid handle during shutdown
+- add lum_sdk_init_ui api to run sdk ui (dialog) mode only (no sdk core running)
+- add lum_sdk_init_monitor api to run sdk in monitor (service) mode only (not showing ui, wait for selection status changes and run/stop sdk core)
+- add ui/monitor modes
+- add cs_ui_monitor_modes application sample
+
+## 1.91.791
+- add lum_sdk_init_autorun to allow starting dialog code without running sdk (showing dialog)
+- add lum_sdk_run to run sdk (show dialog)
+- add lum_sdk_run_wait to run sdk and wait for user selection
+- upgrade sdk to .NET 4.5 (remove dependency on buggy BCL libs)
+- fix support WPF applications
+- add WPF application sample
+
+## 1.84.644
+- rename util.dll to lum_sdk_util.dll to avoid conflict with partner naming
+
+## 1.83.652
+- add RAD Studio 10.2 form application sample
+- add lum_sdk32_bcb.lib to support Borland C++Builder (RAD Studio) compiler
+
+## 1.81.356
+- fix analytics reporting to server
+- validate extracted resources using sha1
+
+## 1.80.4
+- add Qt5.7 widget application sample
+- fix disclaimer english text
+- fix default dialog values
+- fix starting builtin core svc (if exists)
+- change samples to be compatible with vs2010 instead of vs2013
+- fix Microsoft.Threading.Tasks.dll loading race condition
+- fix permissions for files/directories
+- add detection for kb2468871 required for async
+
+## 1.73.852
+- fix crash related to clear_choice (deadlock)
+- fix call notify on first init when selection exists
+- fix calling clear_choice before/without init first
+- fix microsoft.threading.tasks.dll loading path
+- allow notify on threads with Dispatcher without synchronizationcontext
+- change console sample to use init_wait
+
+## 1.73.383
+- upgrade sdk to .NET 4.0
+- add Russian translation
+- fix assembly info
+- add .NET 4.0 support detection for native dll
+- adjust dialog button width to content
+- fix crash non-protected access to Process
+- add lum_sdk_is_supported api for non-managed applications
+- fix crash loading Microsoft.Threading.Tasks.dll
+- add lum_sdk_init_wait api to wait on init until user seletion is made
+- add lum_sdk_set_choice_change_cb api for setting callback function on choice changes
+
+## 1.68.308
+- fix handling of stdio vs. core svc causing crashes
+
+## 1.68.5
+- fix core svc stuck due to invalid stderr
+- fix core svc crashes on exit (double fd close and null g_conf set)
+- add text options enum for peer/not-peer button text
+- change all dialog text to come from resource (currenty only en-US culture)
+- add strong name signing to all libraries
+
+## 1.66.452
+- fixed crash on network down
+
+## 1.66.164
+- api now to exports stdcall instead of cdecl (support non-C languages)
+- improved logging to track bugs
+- add import declaration for VB6 (lum_sdk.bas)
+
+## 1.63.567
+- fixed lum_sdk.dll (C#) missing export of lum_sdk_set_dlg_size
+- fixed invalid dialog width on first load
+
+## 1.63.247
+- First (wide) release version
+- lum_sdk(32|64).dll is now a native non-managed dll (/MT)
+- msvcr120.dll required to run managed part of sdk is now embedded in dll
+- dialog size can now be controled using lum_sdk_set_dlg_size api

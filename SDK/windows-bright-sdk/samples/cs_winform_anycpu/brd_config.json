@@ -1,0 +1,10 @@
+{
+    "app_name": "MyApp",
+    /*"logo_link": "https://example.com/logo.png",*/
+    /*"bg_color": "#ffffffff",*/
+    /*"btn_color": "#ff323232",*/
+    /*"txt_color": "#ff000000",*/
+    /*"benefit": "To get some feature",*/
+    /*"agree_btn": "I_AGREE",*/
+    "disagree_btn": "I_DISAGREE"
+}

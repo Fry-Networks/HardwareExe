@@ -1,0 +1,45 @@
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+
+# Temporary files
+_tmp_*.txt
+*.pyc
+__pycache__/
+*.egg-info/
+.eggs/
+
+# Build logs & output
+build_output.txt
+
+# Release binaries (local builds)
+release/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.venv_build/
+
+# Logs
+logs/
+*.log
+miner_gui.log
+
+# Local configuration
+.env
+*.local.json
+
+# Testing artifacts
+TESTING/

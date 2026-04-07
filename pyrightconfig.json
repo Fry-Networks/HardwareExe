@@ -1,0 +1,18 @@
+{
+  "typeCheckingMode": "standard",
+  "pythonVersion": "3.11",
+  "include": [
+    "miner_GUI",
+    "miner_core"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__"
+  ],
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
+  "reportUnusedImport": true,
+  "reportUnusedVariable": true,
+  "reportGeneralTypeIssues": true,
+  "reportOptionalMemberAccess": true
+}
