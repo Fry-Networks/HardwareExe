@@ -45,7 +45,7 @@ def init_mysterium_support(self: "MainWindow") -> None:
     except Exception:
         pass
     self.mysterium_panel.refresh_clicked.connect(lambda: refresh_mysterium_status(self))
-    self.mysterium_panel.toggle_changed.connect(lambda enabled: handle_mysterium_toggle(self, enabled))
+    # toggle_changed not connected — all integrations are forced ON
     self.mysterium_panel.warning_clicked.connect(lambda: show_mysterium_warning(self))
     try:
         self.mysterium_panel.diagnose_clicked.connect(lambda: diagnose_mysterium(self))
@@ -100,6 +100,13 @@ def bootstrap_mysterium_status(self: "MainWindow") -> None:
             self.mysterium_panel.update_status(status)
             update_mysterium_warning(self, status)
             self._apply_partner_opt_in("mysterium", status.enabled)
+
+            # Auto-start: if enabled but not running, start automatically
+            if bool(self._mysterium_enabled) and not status.running:
+                try:
+                    self.mysterium_controller.start()
+                except Exception:
+                    pass
     except Exception as exc:
         self.mysterium_panel.show_status_message(f"Mysterium error: {exc}")
         return
@@ -178,6 +185,14 @@ def refresh_mysterium_status(self: "MainWindow") -> None:
             status.enabled = bool(self._mysterium_enabled) if self._mysterium_enabled is not None else False
         except Exception:
             pass
+
+        # Watchdog: if enabled but not running, auto-restart
+        if bool(self._mysterium_enabled) and not status.running:
+            try:
+                self.mysterium_controller.start()
+            except Exception:
+                pass
+
         panel.update_status(status)
         update_mysterium_warning(self, status)
     except Exception as exc:
@@ -282,6 +297,55 @@ def show_mysterium_consent_dialog(self: "MainWindow") -> bool:
     return dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted
 
 
+class _MysteriumSetupWorker(QtCore.QThread):
+    """Runs blocking Mysterium enable sequence off the GUI thread."""
+    progress_text = QtCore.Signal(str)
+    finished = QtCore.Signal(bool, str)  # (success, error_message)
+
+    def __init__(self, controller, payout: str, parent=None):
+        super().__init__(parent)
+        self._controller = controller
+        self._payout = payout
+
+    def run(self):
+        try:
+            self.progress_text.emit("Verifying firewall and installing service...")
+            self._controller.ensure_installed(payout_addr=self._payout)
+
+            self.progress_text.emit("Starting Mysterium service...")
+            self._controller.start()
+
+            self.progress_text.emit("Configuring identity and payout...")
+            if self._payout:
+                try:
+                    ident = self._controller._current_identity()
+                    if ident:
+                        self._controller._set_beneficiary(ident, self._payout)
+                except Exception:
+                    pass
+
+            self.progress_text.emit("Starting WireGuard service...")
+            self._controller._start_wireguard_service()
+
+            self.progress_text.emit("Starting provider services...")
+            try:
+                self._controller.start_additional_services()
+            except Exception:
+                pass
+
+            self.progress_text.emit("Accepting terms and verifying...")
+            try:
+                status = self._controller.refresh_status()
+                if not status.consent_given:
+                    self._controller.accept_terms()
+            except Exception:
+                pass
+
+            self.finished.emit(True, "")
+        except Exception as exc:
+            self.finished.emit(False, str(exc))
+
+
 def apply_mysterium_state(self: "MainWindow", enable: bool) -> None:
     """Apply Mysterium enable/disable state.
 
@@ -310,84 +374,72 @@ def apply_mysterium_state(self: "MainWindow", enable: bool) -> None:
         QtWidgets.QApplication.processEvents()
 
     self.mysterium_panel.set_busy(True)
-    try:
-        if enable:
-            # Read payout address from encrypted config; require presence
-            try:
-                from miner_GUI.utils.data import read_mysterium_secrets
-                payout, _, _ = read_mysterium_secrets()
-            except Exception:
-                payout = None
-            if not payout:
-                raise RuntimeError("MYST_PAYOUT_ADDR missing in miner_config.enc. Please install a valid config.")
-            try:
-                QtWidgets.QApplication.processEvents()
-                self.mysterium_controller.ensure_installed(payout_addr=payout)
-                QtWidgets.QApplication.processEvents()
-            except Exception as exc:
-                raise RuntimeError(f"Mysterium install failed: {exc}")
-            self.mysterium_controller.start()
-            QtWidgets.QApplication.processEvents()
-            # Ensure beneficiary is set after service starts
-            if payout:
+
+    if enable:
+        # Read payout address from encrypted config; require presence
+        try:
+            from miner_GUI.utils.data import read_mysterium_secrets
+            payout, _, _ = read_mysterium_secrets()
+        except Exception:
+            payout = None
+        if not payout:
+            if progress:
+                progress.close()
+            fry_error(self, "Mysterium", "MYST_PAYOUT_ADDR missing in miner_config.enc. Please install a valid config.")
+            self.mysterium_panel.set_busy(False)
+            return
+
+        # Run blocking setup in background thread (avoids GUI freeze)
+        worker = _MysteriumSetupWorker(self.mysterium_controller, payout, parent=self)
+        if progress and shiboken6.isValid(progress):
+            worker.progress_text.connect(
+                lambda text: progress.setLabelText(text) if shiboken6.isValid(progress) else None,
+                QtCore.Qt.ConnectionType.QueuedConnection,
+            )
+
+        def _on_worker_done(success: bool, error: str) -> None:
+            if progress and shiboken6.isValid(progress):
+                progress.close()
+            if not success:
+                fry_error(self, "Mysterium", error)
                 try:
-                    ident = self.mysterium_controller._current_identity()
-                    if ident:
-                        self.mysterium_controller._set_beneficiary(ident, payout)
+                    status = self.mysterium_controller.refresh_status()
+                    self._mysterium_enabled = False
+                    try:
+                        status.enabled = False
+                    except Exception:
+                        pass
+                    self.mysterium_panel.update_status(status)
+                    update_mysterium_warning(self, status)
+                    try:
+                        panel = self.mysterium_panel
+                        panel._suspend_toggle = True
+                        panel._toggle.setChecked(False)
+                        panel._suspend_toggle = False
+                    except Exception:
+                        pass
                 except Exception:
                     pass
-            QtWidgets.QApplication.processEvents()
-            # Start WireGuard service via TequilAPI
-            if not self.mysterium_controller._start_wireguard_service():
-                # Service start failed but continue - user can retry toggle
-                pass
-            QtWidgets.QApplication.processEvents()
-            # Start additional provider services (dvpn, data_transfer, scraping, monitoring)
-            try:
-                self.mysterium_controller.start_additional_services()
-            except Exception:
-                pass
-            QtWidgets.QApplication.processEvents()
-            # Accept terms if not already done
-            try:
-                status = self.mysterium_controller.refresh_status()
-                QtWidgets.QApplication.processEvents()
-                if not status.consent_given:
-                    self.mysterium_controller.accept_terms()
-                    QtWidgets.QApplication.processEvents()
-            except Exception:
-                pass
-        else:
+                self.mysterium_panel.set_busy(False)
+                return
+            # Success — start approval polling (defined below)
+            _start_polling()
+
+        worker.finished.connect(_on_worker_done, QtCore.Qt.ConnectionType.QueuedConnection)
+        self._mysterium_setup_worker = worker  # prevent GC
+        worker.start()
+    else:
+        try:
             self.mysterium_controller.stop()
-            QtWidgets.QApplication.processEvents()
-    except Exception as exc:
+        except Exception as exc:
+            if progress:
+                progress.close()
+            fry_error(self, "Mysterium", str(exc))
+            self.mysterium_panel.set_busy(False)
+            return
         if progress:
             progress.close()
-        fry_error(self, "Mysterium", str(exc))
-        try:
-            status = self.mysterium_controller.refresh_status()
-            self._mysterium_enabled = False
-            try:
-                status.enabled = False
-            except Exception:
-                pass
-            self.mysterium_panel.update_status(status)
-            update_mysterium_warning(self, status)
-            try:
-                panel = self.mysterium_panel
-                panel._suspend_toggle = True
-                panel._toggle.setChecked(False)
-                panel._suspend_toggle = False
-            except Exception:
-                pass
-        except Exception:
-            pass
-        self.mysterium_panel.set_busy(False)
-        return
-
-    # Close progress dialog — setup phase is done
-    if progress:
-        progress.close()
+        # Disable path falls through to polling below
 
     def _on_confirmed() -> None:
         status = self.mysterium_controller.refresh_status()
@@ -437,12 +489,18 @@ def apply_mysterium_state(self: "MainWindow", enable: bool) -> None:
         logger.warning("Mysterium approval poll timed out (expected enable=%s)", enable)
         fry_error(self, "Mysterium", "Service did not confirm the approval change in time.")
 
-    self._poll_gui_config_approval(
-        partner="mysterium",
-        expected=enable,
-        on_confirmed=_on_confirmed,
-        on_timeout=_on_timeout,
-    )
+    def _start_polling() -> None:
+        self._poll_gui_config_approval(
+            partner="mysterium",
+            expected=enable,
+            on_confirmed=_on_confirmed,
+            on_timeout=_on_timeout,
+        )
+
+    # For enable path, polling is started by _on_worker_done after background work completes.
+    # For disable path, start polling immediately since stop() already ran above.
+    if not enable:
+        _start_polling()
 
 
 def update_mysterium_warning(self: "MainWindow", status: Optional[MysteriumStatus]) -> None:

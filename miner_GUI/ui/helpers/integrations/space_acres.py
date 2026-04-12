@@ -60,19 +60,27 @@ def init_space_acres_support(self: "MainWindow") -> None:
             panel.show_status_message(f"Space Acres unavailable: {exc}")
         return
 
+    # SSD hard gate — Space Acres requires SSD storage
+    if not self.space_acres_controller.detect_ssd_available():
+        msg = ("Space Acres requires SSD storage.\n"
+               "No SSD detected on this device.\n"
+               "Space Acres will remain disabled until an SSD is installed.")
+        if _is_sdn_live_panel(panel):
+            panel.set_space_acres_unavailable(msg)
+        else:
+            panel.show_status_message(msg)
+        from miner_GUI.utils.data import log_step
+        log_step("space_acres_ssd_gate", {"blocked": True})
+        return
+
     # Load available_ssds and spaceacres_config from gui_config.enc
     _load_ssd_config_from_gui_config(self, panel)
 
-    # Connect signals based on panel type
+    # Connect refresh signal (toggle + config removed — all integrations are forced ON)
     if _is_sdn_live_panel(panel):
         panel.space_acres_refresh_clicked.connect(lambda: refresh_space_acres_status(self))
-        panel.space_acres_toggle_changed.connect(lambda enabled: handle_space_acres_toggle(self, enabled))
-        panel.space_acres_configure_requested.connect(
-            lambda path, size: handle_configure_request(self, path, size)
-        )
     else:
         panel.refresh_clicked.connect(lambda: refresh_space_acres_status(self))
-        panel.toggle_changed.connect(lambda enabled: handle_space_acres_toggle(self, enabled))
 
     QtCore.QTimer.singleShot(0, lambda: bootstrap_space_acres_status(self))
 
@@ -176,6 +184,13 @@ def bootstrap_space_acres_status(self: "MainWindow") -> None:
             panel.update_space_acres_status(status)
         else:
             panel.update_status(status)
+
+        # Auto-start: if configured but not running, start automatically
+        if status.configured and not status.running:
+            try:
+                enqueue_start_docker_container("spaceacres-node")
+            except Exception:
+                pass
     except Exception as exc:
         if is_sdn:
             panel.set_space_acres_unavailable(f"Space Acres error: {exc}")
@@ -227,6 +242,14 @@ def refresh_space_acres_status(self: "MainWindow") -> None:
 
     try:
         status = self.space_acres_controller.refresh_status()
+
+        # Watchdog: if configured but not running, auto-restart
+        if status.configured and not status.running and not status.pending:
+            try:
+                enqueue_start_docker_container("spaceacres-node")
+            except Exception:
+                pass
+
         if is_sdn:
             panel.update_space_acres_status(status)
         else:

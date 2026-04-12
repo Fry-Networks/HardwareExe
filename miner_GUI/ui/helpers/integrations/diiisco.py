@@ -80,13 +80,11 @@ def init_diiisco_support(self: "MainWindow") -> None:
             panel.show_status_message(f"Diiisco unavailable: {exc}")
         return
 
-    # Connect signals based on panel type
+    # Connect refresh signal (toggle removed — all integrations are forced ON)
     if _is_rdn_live_panel(panel):
         panel.diiisco_refresh_clicked.connect(lambda: refresh_diiisco_status(self))
-        panel.diiisco_toggle_changed.connect(lambda enabled: handle_diiisco_toggle(self, enabled))
     else:
         panel.refresh_clicked.connect(lambda: refresh_diiisco_status(self))
-        panel.toggle_changed.connect(lambda enabled: handle_diiisco_toggle(self, enabled))
 
     QtCore.QTimer.singleShot(0, lambda: bootstrap_diiisco_status(self))
 
@@ -112,6 +110,13 @@ def bootstrap_diiisco_status(self: "MainWindow") -> None:
             panel.update_diiisco_status(status)
         else:
             panel.update_status(status)
+
+        # Auto-start: if configured but not running, start automatically
+        if status.configured and not status.running:
+            try:
+                enqueue_start_docker_container("diiisco-node")
+            except Exception:
+                pass
     except Exception as exc:
         if is_rdn:
             panel.set_diiisco_unavailable(f"Diiisco error: {exc}")
@@ -159,6 +164,14 @@ def refresh_diiisco_status(self: "MainWindow") -> None:
 
     try:
         status = self.diiisco_controller.refresh_status()
+
+        # Watchdog: if configured but not running, auto-restart
+        if status.configured and not status.running and not status.pending:
+            try:
+                enqueue_start_docker_container("diiisco-node")
+            except Exception:
+                pass
+
         if is_rdn:
             panel.update_diiisco_status(status)
         else:

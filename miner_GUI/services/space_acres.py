@@ -187,6 +187,50 @@ class SpaceAcresController:
         self._space_acres_bin = self._find_space_acres_binary()
         self._last_error: Optional[str] = None
         self._process: Optional[subprocess.Popen] = None
+        self._ssd_available: Optional[bool] = None
+
+    def detect_ssd_available(self) -> bool:
+        """Check if at least one SSD/NVMe drive is present. Cached after first call."""
+        if self._ssd_available is not None:
+            return self._ssd_available
+
+        if os.name == "nt":
+            self._ssd_available = self._detect_ssd_windows()
+        else:
+            self._ssd_available = self._detect_ssd_linux()
+
+        log_step("ssd_detection", {"ssd_available": self._ssd_available})
+        return self._ssd_available
+
+    def _detect_ssd_windows(self) -> bool:
+        """Windows: Use PowerShell Get-PhysicalDisk to check for SSD/NVMe."""
+        try:
+            result = subprocess.run(
+                ["powershell", "-NoProfile", "-Command",
+                 "Get-PhysicalDisk | Select-Object -ExpandProperty MediaType"],
+                capture_output=True, text=True, timeout=10,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
+            if result.returncode == 0:
+                for line in result.stdout.strip().splitlines():
+                    media = line.strip()
+                    if media in ("SSD", "NVMe"):
+                        return True
+            return False
+        except Exception:
+            return False
+
+    def _detect_ssd_linux(self) -> bool:
+        """Linux: Check /sys/block/*/queue/rotational (0=SSD, 1=HDD)."""
+        try:
+            import glob
+            for path in glob.glob("/sys/block/*/queue/rotational"):
+                with open(path) as f:
+                    if f.read().strip() == "0":
+                        return True
+            return False
+        except Exception:
+            return False
 
     def _find_space_acres_binary(self) -> Optional[Path]:
         """Locate Space Acres executable."""

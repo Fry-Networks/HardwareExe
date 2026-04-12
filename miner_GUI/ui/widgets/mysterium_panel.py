@@ -35,9 +35,9 @@ class MysteriumPanel(QtWidgets.QGroupBox):
         layout.setVerticalSpacing(8)
         layout.setColumnStretch(0, 1)
 
+        # Toggle switch (hidden — all integrations are forced ON)
         self._toggle = ToggleSwitch(width=58, height=28)
         self._toggle.stateChanged.connect(self._on_toggle_state)
-        layout.addWidget(self._toggle, 0, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
 
         self._status_label = QtWidgets.QLabel("Mysterium status: unavailable")
         self._status_label.setWordWrap(True)

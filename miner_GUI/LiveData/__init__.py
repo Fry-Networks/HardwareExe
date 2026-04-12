@@ -24,7 +24,8 @@ def load_live_panel(group: str, width: int = 800, screen_size: str = "desktop"):
             from .geiger import GeigerPanel
             return GeigerPanel(width=width)
         if grp == "SVN":
-            return None  # bare node, no live data
+            from .svn import SvnPanel
+            return SvnPanel(width=width, screen_size=screen_size)
         if grp == "RDN":
             from .rdn import RdnPanel
             return RdnPanel(width=width, screen_size=screen_size)

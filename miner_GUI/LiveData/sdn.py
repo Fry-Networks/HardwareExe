@@ -151,9 +151,9 @@ class StorageNodeTab(QtWidgets.QGroupBox):
         toggle_row = QtWidgets.QHBoxLayout()
         toggle_row.addStretch(1)
 
+        # Toggle switch (hidden — all integrations are forced ON)
         self._toggle = ToggleSwitch(width=58, height=28)
         self._toggle.stateChanged.connect(self._on_toggle_state)
-        toggle_row.addWidget(self._toggle)
         layout.addLayout(toggle_row)
 
         # --- Status label ---
@@ -273,6 +273,7 @@ class StorageNodeTab(QtWidgets.QGroupBox):
         config_layout.addWidget(self._save_config_btn)
 
         layout.addWidget(self._config_widget)
+        self._config_widget.hide()  # Config managed by PoC service, not user
 
         layout.addStretch(1)
 

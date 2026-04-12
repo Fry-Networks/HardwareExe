@@ -92,13 +92,11 @@ def init_presearch_support(self: "MainWindow") -> None:
             panel.show_status_message(f"Presearch unavailable: {exc}")
         return
 
-    # Connect signals based on panel type
+    # Connect refresh signal (toggle removed — all integrations are forced ON)
     if _is_rdn_live_panel(panel):
         panel.presearch_refresh_clicked.connect(lambda: refresh_presearch_status(self))
-        panel.presearch_toggle_changed.connect(lambda enabled: handle_presearch_toggle(self, enabled))
     else:
         panel.refresh_clicked.connect(lambda: refresh_presearch_status(self))
-        panel.toggle_changed.connect(lambda enabled: handle_presearch_toggle(self, enabled))
 
     QtCore.QTimer.singleShot(0, lambda: bootstrap_presearch_status(self))
 
@@ -124,6 +122,13 @@ def bootstrap_presearch_status(self: "MainWindow") -> None:
             panel.update_presearch_status(status)
         else:
             panel.update_status(status)
+
+        # Auto-start: if configured but not running, start automatically
+        if status.configured and not status.running:
+            try:
+                enqueue_start_docker_container("presearch-node")
+            except Exception:
+                pass
     except Exception as exc:
         if is_rdn:
             panel.set_presearch_unavailable(f"Presearch error: {exc}")
@@ -171,6 +176,14 @@ def refresh_presearch_status(self: "MainWindow") -> None:
 
     try:
         status = self.presearch_controller.refresh_status()
+
+        # Watchdog: if configured but not running, auto-restart
+        if status.configured and not status.running and not status.pending:
+            try:
+                enqueue_start_docker_container("presearch-node")
+            except Exception:
+                pass
+
         if is_rdn:
             panel.update_presearch_status(status)
         else:

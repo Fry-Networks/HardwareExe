@@ -47,6 +47,7 @@ from .widgets.mysterium_panel import MysteriumPanel
 from .widgets.space_acres_panel import SpaceAcresPanel
 from .widgets.presearch_panel import PresearchPanel
 from .widgets.diiisco_panel import DiiiscoPanel
+from .widgets.xmrig_panel import XMRigPanel
 from miner_GUI.LiveData.satellite import SatellitePanel
 from miner_GUI.LiveData.geiger import GeigerPanel
 from .history.data_history import DataHistoryWidget
@@ -57,12 +58,14 @@ from miner_GUI.services.mysterium import MysteriumController
 from miner_GUI.services.space_acres import SpaceAcresController
 from miner_GUI.services.presearch import PresearchController
 from miner_GUI.services.diiisco import DiiiscoController
+from miner_GUI.services.xmrig import XMRigController
 from miner_GUI.ui.helpers.integrations import bright as bright_helpers
 from miner_GUI.ui.helpers.integrations import diiisco as diiisco_helpers
 from miner_GUI.ui.helpers.integrations import honeygain as honeygain_helpers
 from miner_GUI.ui.helpers.integrations import mysterium as mysterium_helpers
 from miner_GUI.ui.helpers.integrations import presearch as presearch_helpers
 from miner_GUI.ui.helpers.integrations import space_acres as space_acres_helpers
+from miner_GUI.ui.helpers.integrations import xmrig as xmrig_helpers
 from miner_GUI.ui.helpers import rewards as rewards_helpers
 from miner_GUI.ui.helpers import pod_badge as pod_badge_helpers
 from miner_GUI.ui.helpers import network as network_helpers
@@ -156,13 +159,18 @@ class MainWindow(QtWidgets.QWidget):
         self.space_acres_controller: Optional[SpaceAcresController] = None
         self._space_acres_timer: Optional[QtCore.QTimer] = None
 
-        # SVN integrations (Presearch, Diiisco)
+        # RDN integrations (Presearch, Diiisco)
         self.presearch_panel: Optional[PresearchPanel] = None
         self.presearch_controller: Optional[PresearchController] = None
         self._presearch_timer: Optional[QtCore.QTimer] = None
         self.diiisco_panel: Optional[DiiiscoPanel] = None
         self.diiisco_controller: Optional[DiiiscoController] = None
         self._diiisco_timer: Optional[QtCore.QTimer] = None
+
+        # SVN integrations (XMRig mining)
+        self.xmrig_panel: Optional[XMRigPanel] = None
+        self.xmrig_controller: Optional[XMRigController] = None
+        self._xmrig_timer: Optional[QtCore.QTimer] = None
 
         # Theme instance (initialized by _apply_fry_theme)
         self._theme: Optional[Any] = None
@@ -193,6 +201,9 @@ class MainWindow(QtWidgets.QWidget):
         # RDN integrations (Presearch and Diiisco for rewards decentralization nodes)
         self._allow_presearch = MINER_CODE == "RDN"
         self._allow_diiisco = MINER_CODE == "RDN"
+
+        # SVN integrations (XMRig for storage validation nodes)
+        self._allow_xmrig = MINER_CODE == "SVN"
 
         try:
             log_step("bm_sharing_mode", {"mode": self._sharing_mode})
@@ -1063,6 +1074,8 @@ class MainWindow(QtWidgets.QWidget):
                 self._attach_sdn_panels(data_layout)
             elif MINER_CODE == "RDN":
                 self._attach_service_node_panels(data_layout)
+            elif MINER_CODE == "SVN":
+                self._attach_svn_panels(data_layout)
         else:
             # Original split layout for larger screens
             main_layout = QtWidgets.QHBoxLayout(self.liveGb)
@@ -1138,6 +1151,8 @@ class MainWindow(QtWidgets.QWidget):
                 self._attach_sdn_panels(data_layout)
             elif MINER_CODE == "RDN":
                 self._attach_service_node_panels(data_layout)
+            elif MINER_CODE == "SVN":
+                self._attach_svn_panels(data_layout)
 
     def _attach_sharing_panels(self, layout: QtWidgets.QVBoxLayout) -> None:
         """Add combined Earnings & Sharing section with Honeygain and Bright rows."""
@@ -1310,6 +1325,55 @@ class MainWindow(QtWidgets.QWidget):
             diiisco_helpers.init_diiisco_support(self)
         
         # Check readiness after status data loads (pending already set at panel creation)
+        QtCore.QTimer.singleShot(2500, self._refresh_sharing_gate)
+
+        layout.addSpacing(6)
+        layout.addWidget(container, 0, QtCore.Qt.AlignmentFlag.AlignTop)
+
+    def _attach_svn_panels(self, layout: QtWidgets.QVBoxLayout) -> None:
+        """Add SVN mining integrations (XMRig for storage validation)."""
+        # Check if live_panel is already an SvnPanel (LiveData version)
+        live_panel = getattr(self, 'live_panel', None)
+        if live_panel is not None and hasattr(live_panel, 'xmrig_refresh_clicked'):
+            # LiveData SvnPanel handles the UI; set pending state before initializing
+            if self._allow_xmrig:
+                live_panel.xmrig_panel._status_label.setText(PENDING_MESSAGE)
+                live_panel.xmrig_panel.set_pending_state(True)
+
+                xmrig_helpers.init_xmrig_support(self)
+            return
+
+        # Fallback: create standalone panels (legacy mode)
+        container = QtWidgets.QGroupBox("Mining")
+        container_layout = QtWidgets.QVBoxLayout(container)
+        is_mobile = getattr(self, "_screen_size_pref", "") == "mobile"
+        container_layout.setContentsMargins(6 if is_mobile else 12, 6 if is_mobile else 2, 6 if is_mobile else 12, 6)
+        container_layout.setSpacing(8 if is_mobile else 14)
+        container.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
+
+        # Build tabs for SVN integrations
+        tabs = QtWidgets.QTabWidget()
+
+        # XMRig tab
+        if self._allow_xmrig:
+            self.xmrig_panel = XMRigPanel()
+            self._flatten_groupbox(self.xmrig_panel)
+            self.xmrig_panel.setSizePolicy(
+                QtWidgets.QSizePolicy.Policy.Expanding,
+                QtWidgets.QSizePolicy.Policy.Preferred,
+            )
+            self.xmrig_panel._status_label.setText(PENDING_MESSAGE)
+            self.xmrig_panel._stats_label.setText("")
+            self.xmrig_panel.set_pending_state(True)
+            tabs.addTab(self.xmrig_panel, "XMRig")
+
+        container_layout.addWidget(tabs)
+
+        # Initialize support
+        if self._allow_xmrig:
+            xmrig_helpers.init_xmrig_support(self)
+
+        # Check readiness after status data loads
         QtCore.QTimer.singleShot(2500, self._refresh_sharing_gate)
 
         layout.addSpacing(6)
@@ -1497,6 +1561,7 @@ class MainWindow(QtWidgets.QWidget):
                 "BM": ("honeygain", "bright", "mysterium"),
                 "RDN": ("presearch", "diiisco"),
                 "SDN": ("space_acres",),
+                "SVN": ("xmrig",),
             }
             known = _approval_keys.get(MINER_CODE, ())
             approvals: Dict[str, Any] = {}
