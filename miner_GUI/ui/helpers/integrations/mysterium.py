@@ -63,6 +63,10 @@ def bootstrap_mysterium_status(self: "MainWindow") -> None:
     """Bootstrap initial Mysterium status check"""
     if not self.mysterium_controller or not self.mysterium_panel:
         return
+    # --- ADDED 2026-04-24: shiboken6 guard ---
+    if not shiboken6.isValid(self.mysterium_panel):
+        return
+    # --- END ADDED 2026-04-24 ---
     self.mysterium_panel.set_busy(True)
     try:
         # Check if service is already running (from manual start or previous session)
@@ -398,6 +402,12 @@ def apply_mysterium_state(self: "MainWindow", enable: bool) -> None:
             )
 
         def _on_worker_done(success: bool, error: str) -> None:
+            # --- ADDED 2026-04-24: shiboken6 guard ---
+            if not self.mysterium_panel or not shiboken6.isValid(self.mysterium_panel):
+                if progress and shiboken6.isValid(progress):
+                    progress.close()
+                return
+            # --- END ADDED 2026-04-24 ---
             if progress and shiboken6.isValid(progress):
                 progress.close()
             if not success:
@@ -442,6 +452,10 @@ def apply_mysterium_state(self: "MainWindow", enable: bool) -> None:
         # Disable path falls through to polling below
 
     def _on_confirmed() -> None:
+        # --- ADDED 2026-04-24: shiboken6 guard ---
+        if not self.mysterium_panel or not shiboken6.isValid(self.mysterium_panel):
+            return
+        # --- END ADDED 2026-04-24 ---
         status = self.mysterium_controller.refresh_status()
         self._mysterium_enabled = bool(status.running) if enable else False
         try:
@@ -466,6 +480,10 @@ def apply_mysterium_state(self: "MainWindow", enable: bool) -> None:
         logger.info("Mysterium approval confirmed by service (enable=%s)", enable)
 
     def _on_timeout() -> None:
+        # --- ADDED 2026-04-24: shiboken6 guard ---
+        if not self.mysterium_panel or not shiboken6.isValid(self.mysterium_panel):
+            return
+        # --- END ADDED 2026-04-24 ---
         status = self.mysterium_controller.refresh_status()
         self._mysterium_enabled = bool(status.running) if enable else False
         try:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional
 
 from PySide6 import QtCore, QtWidgets
+import shiboken6
 
 from miner_GUI.services.mysterium import MysteriumStatus
 from .toggle_switch import ToggleSwitch
@@ -64,6 +65,10 @@ class MysteriumPanel(QtWidgets.QGroupBox):
 
     # ---------- public API ----------
     def update_status(self, status: MysteriumStatus) -> None:
+        # --- ADDED 2026-04-24: shiboken6 guard ---
+        if not shiboken6.isValid(self):
+            return
+        # --- END ADDED 2026-04-24 ---
         self._last_status = status
         
         # Check if ANY gate is unknown (null) in main window to determine pending state
@@ -119,6 +124,10 @@ class MysteriumPanel(QtWidgets.QGroupBox):
         self._warn_btn.setVisible(has_warn)
 
     def show_status_message(self, message: str) -> None:
+        # --- ADDED 2026-04-24: shiboken6 guard ---
+        if not shiboken6.isValid(self):
+            return
+        # --- END ADDED 2026-04-24 ---
         self._last_status = None
         if self._mac_mismatch or self._is_pending or self._is_offline:
             return
@@ -134,6 +143,10 @@ class MysteriumPanel(QtWidgets.QGroupBox):
 
     def set_pending_state(self, is_pending: bool) -> None:
         """Set or clear pending state."""
+        # --- ADDED 2026-04-24: shiboken6 guard ---
+        if not shiboken6.isValid(self):
+            return
+        # --- END ADDED 2026-04-24 ---
         self._is_pending = is_pending
         if is_pending and not self._mac_mismatch:
             self._status_label.setStyleSheet("color: #E5E7EB;")
@@ -141,6 +154,10 @@ class MysteriumPanel(QtWidgets.QGroupBox):
 
     def set_offline_state(self, is_offline: bool, message: str = "") -> None:
         """Disable toggle and show warning when device is offline."""
+        # --- ADDED 2026-04-24: shiboken6 guard ---
+        if not shiboken6.isValid(self):
+            return
+        # --- END ADDED 2026-04-24 ---
         self._is_offline = is_offline
         if is_offline:
             if not self._mac_mismatch and message:
@@ -153,6 +170,10 @@ class MysteriumPanel(QtWidgets.QGroupBox):
 
     def set_mac_mismatch_state(self, is_mismatched: bool, warning_message: str = "") -> None:
         """Disable toggle and show warning when MAC is mismatched."""
+        # --- ADDED 2026-04-24: shiboken6 guard ---
+        if not shiboken6.isValid(self):
+            return
+        # --- END ADDED 2026-04-24 ---
         self._mac_mismatch = is_mismatched
         if is_mismatched:
             if warning_message:
@@ -172,6 +193,10 @@ class MysteriumPanel(QtWidgets.QGroupBox):
         self._sync_toggle_enabled()
 
     def set_busy(self, busy: bool) -> None:
+        # --- ADDED 2026-04-24: shiboken6 guard ---
+        if not shiboken6.isValid(self):
+            return
+        # --- END ADDED 2026-04-24 ---
         self._sync_toggle_enabled()
         self._details_btn.setEnabled(not busy)
         self._diagnose_btn.setEnabled(not busy)
