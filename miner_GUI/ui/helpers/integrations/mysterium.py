@@ -6,12 +6,18 @@ from PySide6 import QtCore, QtWidgets
 import shiboken6
 
 from config_profile import MINER_CODE
-from miner_GUI.services.mysterium import MysteriumController, MysteriumStatus
+from miner_GUI.services.mysterium import (
+    MysteriumController, MysteriumStatus,
+    _MysteriumStatusWorker, _MysteriumStartWorker,
+)
 from miner_GUI.utils.gui import fry_error
 from miner_GUI.ui.helpers import rewards as rewards_helpers
 
 if TYPE_CHECKING:
     from miner_GUI.ui.main_window import MainWindow
+
+RETRY_DELAYS_MS = [5_000, 10_000, 30_000, 60_000, 300_000]
+CACHE_FRESH_AFTER_SECONDS = 60
 
 
 def init_mysterium_support(self: "MainWindow") -> None:
@@ -44,7 +50,7 @@ def init_mysterium_support(self: "MainWindow") -> None:
         self.mysterium_panel.diagnose_clicked.disconnect()
     except Exception:
         pass
-    self.mysterium_panel.refresh_clicked.connect(lambda: refresh_mysterium_status(self))
+    self.mysterium_panel.refresh_clicked.connect(lambda: _on_manual_refresh_clicked(self))
     # toggle_changed not connected — all integrations are forced ON
     self.mysterium_panel.warning_clicked.connect(lambda: show_mysterium_warning(self))
     try:
@@ -60,62 +66,28 @@ def init_mysterium_support(self: "MainWindow") -> None:
 
 
 def bootstrap_mysterium_status(self: "MainWindow") -> None:
-    """Bootstrap initial Mysterium status check"""
+    """Bootstrap initial Mysterium status check — non-blocking."""
     if not self.mysterium_controller or not self.mysterium_panel:
         return
-    # --- ADDED 2026-04-24: shiboken6 guard ---
     if not shiboken6.isValid(self.mysterium_panel):
         return
-    # --- END ADDED 2026-04-24 ---
-    self.mysterium_panel.set_busy(True)
-    try:
-        # Check if service is already running (from manual start or previous session)
-        status = self.mysterium_controller.refresh_status()
-        
-        # If service is running but not enabled, auto-enable it
-        if status.running and not bool(self._mysterium_enabled):
-            # Defer auto-enable to avoid blocking GUI thread during startup
-            QtCore.QTimer.singleShot(2000, lambda: deferred_mysterium_auto_enable(self))
-            # Show current status
-            try:
-                status.enabled = False
-            except Exception:
-                pass
-            self.mysterium_panel.update_status(status)
-            update_mysterium_warning(self, status)
-        elif not bool(self._mysterium_enabled):
-            # Service not running and not enabled - show disabled state
-            status = MysteriumStatus(
-                enabled=False,
-                running=False,
-                warning=None,
-                last_error=None,
-                port_ok=False,
-                api_ok=False,
-            )
-            self.mysterium_panel.update_status(status)
-            update_mysterium_warning(self, status)
-        else:
-            # Already enabled - just refresh
-            try:
-                status.enabled = bool(self._mysterium_enabled)
-            except Exception:
-                pass
-            self.mysterium_panel.update_status(status)
-            update_mysterium_warning(self, status)
-            self._apply_partner_opt_in("mysterium", status.enabled)
+    _ensure_retry_state(self)
 
-            # Auto-start: if enabled but not running, start automatically
-            if bool(self._mysterium_enabled) and not status.running:
-                try:
-                    self.mysterium_controller.start()
-                except Exception:
-                    pass
-    except Exception as exc:
-        self.mysterium_panel.show_status_message(f"Mysterium error: {exc}")
-        return
-    finally:
-        self.mysterium_panel.set_busy(False)
+    # Paint cached status immediately (zero-blocking GUI startup)
+    cached = self.mysterium_controller.load_cached_status()
+    if cached is not None:
+        status, age = cached
+        self.mysterium_panel.update_status(status)
+        update_mysterium_warning(self, status)
+        if age > CACHE_FRESH_AFTER_SECONDS:
+            self.mysterium_panel.show_status_message(
+                f"Mysterium: last seen {int(age)}s ago, refreshing..."
+            )
+    else:
+        self.mysterium_panel.show_status_message("Mysterium: checking...")
+
+    self.mysterium_panel.set_busy(True)
+    _dispatch_status_worker(self)
     start_mysterium_timer(self)
     rewards_helpers.update_rewards_hint(self)
 
@@ -160,15 +132,165 @@ def stop_mysterium_timer(self: "MainWindow") -> None:
     self._mysterium_timer = None
 
 
+# --------------- async dispatch helpers ---------------
+
+
+def _ensure_retry_state(self: "MainWindow") -> None:
+    """Lazy-init retry tracking on MainWindow."""
+    if not hasattr(self, "_mysterium_retry_index"):
+        self._mysterium_retry_index = 0
+    if not hasattr(self, "_mysterium_retry_timer"):
+        self._mysterium_retry_timer = None
+    if not hasattr(self, "_mysterium_status_worker"):
+        self._mysterium_status_worker = None
+    if not hasattr(self, "_mysterium_start_worker"):
+        self._mysterium_start_worker = None
+
+
+def _reset_mysterium_retry(self: "MainWindow") -> None:
+    self._mysterium_retry_index = 0
+    t = getattr(self, "_mysterium_retry_timer", None)
+    if t is not None:
+        try:
+            t.stop()
+        except Exception:
+            pass
+        self._mysterium_retry_timer = None
+
+
+def _schedule_mysterium_retry(self: "MainWindow") -> None:
+    idx = min(self._mysterium_retry_index, len(RETRY_DELAYS_MS) - 1)
+    delay = RETRY_DELAYS_MS[idx]
+    self._mysterium_retry_index += 1
+    self._mysterium_retry_timer = QtCore.QTimer(self)
+    self._mysterium_retry_timer.setSingleShot(True)
+    self._mysterium_retry_timer.setInterval(delay)
+    self._mysterium_retry_timer.timeout.connect(lambda: refresh_mysterium_status(self))
+    self._mysterium_retry_timer.start()
+
+
+def _dispatch_status_worker(self: "MainWindow") -> bool:
+    """Spawn _MysteriumStatusWorker. Skip if one already running."""
+    existing = getattr(self, "_mysterium_status_worker", None)
+    if existing is not None and existing.isRunning():
+        return False
+    worker = _MysteriumStatusWorker(self.mysterium_controller, parent=self)
+    self._mysterium_status_worker = worker
+    worker.status_ready.connect(
+        lambda status: _on_status_ready(self, status),
+        QtCore.Qt.ConnectionType.QueuedConnection,
+    )
+    worker.status_error.connect(
+        lambda err: _on_status_error(self, err),
+        QtCore.Qt.ConnectionType.QueuedConnection,
+    )
+    worker.finished.connect(worker.deleteLater)
+    worker.start()
+    QtCore.QTimer.singleShot(
+        MysteriumController.STATUS_WORKER_HARD_TIMEOUT_MS,
+        lambda w=worker: _enforce_worker_timeout(self, w, "status"),
+    )
+    return True
+
+
+def _dispatch_start_worker(self: "MainWindow") -> None:
+    """Spawn _MysteriumStartWorker. Skip if one already running."""
+    existing = getattr(self, "_mysterium_start_worker", None)
+    if existing is not None and existing.isRunning():
+        return
+    worker = _MysteriumStartWorker(self.mysterium_controller, parent=self)
+    self._mysterium_start_worker = worker
+    worker.start_done.connect(
+        lambda ok, msg: _on_start_done(self, ok, msg),
+        QtCore.Qt.ConnectionType.QueuedConnection,
+    )
+    worker.finished.connect(worker.deleteLater)
+    worker.start()
+    QtCore.QTimer.singleShot(
+        MysteriumController.START_WORKER_HARD_TIMEOUT_MS,
+        lambda w=worker: _enforce_worker_timeout(self, w, "start"),
+    )
+
+
+def _enforce_worker_timeout(self: "MainWindow", worker, kind: str) -> None:
+    """If worker still running after hard ceiling, terminate + treat as error."""
+    if worker is None:
+        return
+    try:
+        if worker.isRunning():
+            worker.terminate()
+            worker.wait(2000)
+            if kind == "status":
+                self._mysterium_status_worker = None
+                _on_status_error(self, "timeout (hard ceiling)")
+            else:
+                self._mysterium_start_worker = None
+                _on_start_done(self, False, "start timeout (hard ceiling)")
+    except Exception:
+        pass
+
+
+def _on_status_ready(self: "MainWindow", status: MysteriumStatus) -> None:
+    self._mysterium_status_worker = None  # clear ref before any dispatch
+    if not self.mysterium_panel or not shiboken6.isValid(self.mysterium_panel):
+        return
+    try:
+        self.mysterium_controller.save_cached_status(status)
+    except Exception:
+        pass
+    # Align enabled flag to user preference
+    try:
+        status.enabled = bool(self._mysterium_enabled) if self._mysterium_enabled is not None else False
+    except Exception:
+        pass
+    self.mysterium_panel.update_status(status)
+    update_mysterium_warning(self, status)
+    _reset_mysterium_retry(self)
+    # Watchdog: if enabled but not running, dispatch start worker
+    if bool(self._mysterium_enabled) and not status.running:
+        _dispatch_start_worker(self)
+    self.mysterium_panel.set_busy(False)
+    rewards_helpers.update_rewards_hint(self)
+
+
+def _on_status_error(self: "MainWindow", err: str) -> None:
+    self._mysterium_status_worker = None  # clear ref before any dispatch
+    if not self.mysterium_panel or not shiboken6.isValid(self.mysterium_panel):
+        return
+    self.mysterium_panel.show_status_message(f"Mysterium status check failed: {err}")
+    self.mysterium_panel.set_busy(False)
+    _schedule_mysterium_retry(self)
+
+
+def _on_start_done(self: "MainWindow", ok: bool, msg: str) -> None:
+    self._mysterium_start_worker = None  # clear ref before any dispatch
+    if not self.mysterium_panel or not shiboken6.isValid(self.mysterium_panel):
+        return
+    if not ok:
+        self.mysterium_panel.show_status_message(f"Mysterium start failed: {msg}")
+        _schedule_mysterium_retry(self)
+    else:
+        _dispatch_status_worker(self)
+
+
+def _on_manual_refresh_clicked(self: "MainWindow") -> None:
+    """Wired to panel.refresh_clicked. Resets backoff and dispatches immediately."""
+    _ensure_retry_state(self)
+    _reset_mysterium_retry(self)
+    if self.mysterium_panel and shiboken6.isValid(self.mysterium_panel):
+        self.mysterium_panel.set_busy(True)
+    _dispatch_status_worker(self)
+
+
 def refresh_mysterium_status(self: "MainWindow") -> None:
-    """Refresh Mysterium status display"""
+    """Refresh Mysterium status display — non-blocking dispatch."""
     panel = self.mysterium_panel
     if not self.mysterium_controller or not panel:
         return
     if not shiboken6.isValid(panel):
         stop_mysterium_timer(self)
         return
-    # If user has not enabled Mysterium, keep showing disabled state and skip network calls
+    # If user has not enabled Mysterium, show disabled state without network calls
     if not bool(self._mysterium_enabled):
         status = MysteriumStatus(
             enabled=False,
@@ -181,29 +303,8 @@ def refresh_mysterium_status(self: "MainWindow") -> None:
         panel.update_status(status)
         update_mysterium_warning(self, status)
         return
-    panel.set_busy(True)
-    try:
-        status = self.mysterium_controller.refresh_status()
-        # Keep status.enabled aligned to user preference
-        try:
-            status.enabled = bool(self._mysterium_enabled) if self._mysterium_enabled is not None else False
-        except Exception:
-            pass
-
-        # Watchdog: if enabled but not running, auto-restart
-        if bool(self._mysterium_enabled) and not status.running:
-            try:
-                self.mysterium_controller.start()
-            except Exception:
-                pass
-
-        panel.update_status(status)
-        update_mysterium_warning(self, status)
-    except Exception as exc:
-        panel.show_status_message(f"Mysterium error: {exc}")
-    finally:
-        panel.set_busy(False)
-    rewards_helpers.update_rewards_hint(self)
+    _ensure_retry_state(self)
+    _dispatch_status_worker(self)
 
 
 def handle_mysterium_toggle(self: "MainWindow", enabled: bool) -> None:

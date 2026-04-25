@@ -21,10 +21,13 @@ import time
 import base64
 import requests
 from contextlib import suppress
+import dataclasses
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib import request
+
+from PySide6 import QtCore
 
 from config_profile import MINER_CODE
 from miner_GUI.config import app_dir
@@ -66,6 +69,12 @@ class MysteriumController:
 
     _last_logged_config: Optional[tuple] = None  # Class var to track config and log only on change
 
+    CACHE_FILENAME = "cached_status.json"
+    CACHE_TTL_SECONDS = 60
+    CACHE_MAX_AGE_SECONDS = 86400
+    STATUS_WORKER_HARD_TIMEOUT_MS = 30_000
+    START_WORKER_HARD_TIMEOUT_MS = 60_000
+
     def __init__(self) -> None:
         self._miner_code = MINER_CODE
         self._myst_bin = self._find_myst_binary()
@@ -95,6 +104,37 @@ class MysteriumController:
             return data_dir_gui() / "mysterium"
         except Exception:
             return Path.cwd() / "mysterium"
+
+    def _cache_path(self) -> Path:
+        return self._resolve_data_dir() / self.CACHE_FILENAME
+
+    def load_cached_status(self) -> Optional[Tuple["MysteriumStatus", float]]:
+        """Return (status, age_seconds) if cache exists and within MAX_AGE, else None."""
+        path = self._cache_path()
+        if not path.exists():
+            return None
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            saved_at = float(raw.get("saved_at", 0))
+            age = time.time() - saved_at
+            if age < 0 or age > self.CACHE_MAX_AGE_SECONDS:
+                return None
+            status = MysteriumStatus(**raw["status"])
+            return (status, age)
+        except Exception:
+            return None
+
+    def save_cached_status(self, status: "MysteriumStatus") -> None:
+        """Atomic write: temp file + rename."""
+        path = self._cache_path()
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_suffix(".tmp")
+            payload = {"saved_at": time.time(), "status": dataclasses.asdict(status)}
+            tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            tmp.replace(path)
+        except Exception:
+            pass
 
     def _resolve_port(self) -> int:
         try:
@@ -1583,3 +1623,38 @@ class MysteriumController:
     def mark_offline(self) -> None:
         """Call this when Mysterium is detected as offline to update JSON."""
         self._update_status_json_on_offline()
+
+
+class _MysteriumStatusWorker(QtCore.QThread):
+    """Runs refresh_status off the GUI thread."""
+
+    status_ready = QtCore.Signal(object)
+    status_error = QtCore.Signal(str)
+
+    def __init__(self, controller: MysteriumController, parent=None):
+        super().__init__(parent)
+        self._controller = controller
+
+    def run(self):
+        try:
+            status = self._controller.refresh_status()
+            self.status_ready.emit(status)
+        except Exception as exc:
+            self.status_error.emit(str(exc))
+
+
+class _MysteriumStartWorker(QtCore.QThread):
+    """Runs start() off the GUI thread."""
+
+    start_done = QtCore.Signal(bool, str)
+
+    def __init__(self, controller: MysteriumController, parent=None):
+        super().__init__(parent)
+        self._controller = controller
+
+    def run(self):
+        try:
+            self._controller.start()
+            self.start_done.emit(True, "")
+        except Exception as exc:
+            self.start_done.emit(False, str(exc))
