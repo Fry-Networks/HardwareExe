@@ -69,7 +69,21 @@ def update_rewards_hint(self) -> None:
     is_mobile = getattr(self, "_screen_size_pref", "") == "mobile"
     mode = self._sharing_mode if is_bm else "none"
 
-    if mode == "none":
+    # BM binary model: Mysterium on = 1.00x, off = 0.00x
+    if is_bm:
+        if not self._allow_mysterium:
+            base_note = "Mysterium Sharing not available."
+            status = ""
+            max_multiplier = 0.0
+        elif m_enabled:
+            base_note = "Mysterium Sharing is enabled. You will earn 100% of your rewards."
+            status = "Mysterium: enabled"
+            max_multiplier = 1.0
+        else:
+            base_note = "Mysterium Sharing is disabled. Enable to earn 100% of your rewards."
+            status = "Mysterium: disabled"
+            max_multiplier = 0.0
+    elif mode == "none":
         # For non-BM miners, don't assume 1.0 - wait for backend data
         max_multiplier = None
         base_note = "Bandwidth sharing disabled in this build."
@@ -265,28 +279,32 @@ def update_rewards_hint(self) -> None:
         backend_mult = None
         self._week_multiplier = None
 
-    # Clamp max for safety and align footer to the active max to avoid stale higher values during enable attempts.
-    _abs_max = BM_BASE_REWARD + BM_PER_TOOL_REWARD * 3  # theoretical ceiling (3 tools)
-    try:
-        safe_max: Optional[float] = max(0.0, min(float(max_multiplier), _abs_max)) if max_multiplier is not None else None
-    except Exception:
-        safe_max = None
-
-    current_multiplier = backend_mult
-    if current_multiplier is not None:
-        try:
-            current_multiplier = max(0.0, min(float(current_multiplier), _abs_max))
-            if safe_max is not None:
-                current_multiplier = min(current_multiplier, safe_max)
-        except Exception:
-            current_multiplier = None
+    # BM binary model bypasses backend override and clamping
+    if is_bm:
+        self._current_multiplier = max_multiplier
     else:
-        # Only use safe_max as fallback if we have actual backend data (week_doc exists)
-        # Without backend data, keep None to show "Status pending..." instead of false multiplier
-        current_multiplier = None
+        # Clamp max for safety and align footer to the active max to avoid stale higher values during enable attempts.
+        _abs_max = BM_BASE_REWARD + BM_PER_TOOL_REWARD * 3  # theoretical ceiling (3 tools)
+        try:
+            safe_max: Optional[float] = max(0.0, min(float(max_multiplier), _abs_max)) if max_multiplier is not None else None
+        except Exception:
+            safe_max = None
 
-    self._current_multiplier = current_multiplier
-    max_multiplier = safe_max
+        current_multiplier = backend_mult
+        if current_multiplier is not None:
+            try:
+                current_multiplier = max(0.0, min(float(current_multiplier), _abs_max))
+                if safe_max is not None:
+                    current_multiplier = min(current_multiplier, safe_max)
+            except Exception:
+                current_multiplier = None
+        else:
+            # Only use safe_max as fallback if we have actual backend data (week_doc exists)
+            # Without backend data, keep None to show "Status pending..." instead of false multiplier
+            current_multiplier = None
+
+        self._current_multiplier = current_multiplier
+        max_multiplier = safe_max
 
     # Log for debugging multiplier calculation
     try:

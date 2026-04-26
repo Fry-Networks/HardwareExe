@@ -335,15 +335,17 @@ def handle_mysterium_toggle(self: "MainWindow", enabled: bool) -> None:
                 panel._suspend_toggle = False
             return
     else:
-        # Confirm disable
-        reply = QtWidgets.QMessageBox.warning(
-            self,
-            "Confirm Disable",
-            f"Are you sure you want to disable Mysterium Sharing?",
-            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.Cancel,
-            QtWidgets.QMessageBox.StandardButton.Cancel,
-        )
-        if reply != QtWidgets.QMessageBox.StandardButton.Yes:
+        # Confirm disable — warn about 0% rewards
+        dialog = QtWidgets.QMessageBox(self)
+        dialog.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+        dialog.setWindowTitle("Disable Mysterium Sharing?")
+        dialog.setText("Disabling Mysterium Sharing means you will earn 0% of your rewards.")
+        dialog.setInformativeText("You can re-enable Mysterium Sharing at any time.")
+        disable_btn = dialog.addButton("Disable", QtWidgets.QMessageBox.ButtonRole.DestructiveRole)
+        cancel_btn = dialog.addButton("Cancel", QtWidgets.QMessageBox.ButtonRole.RejectRole)
+        dialog.setDefaultButton(cancel_btn)
+        dialog.exec()
+        if dialog.clickedButton() is not disable_btn:
             if self.mysterium_panel:
                 panel = self.mysterium_panel
                 panel._suspend_toggle = True

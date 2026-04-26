@@ -995,7 +995,9 @@ class MainWindow(QtWidgets.QWidget):
             hg_layout.setContentsMargins(0, 0, 0, 0)
             hg_layout.setSpacing(4)
             hg_layout.addWidget(self.honeygain_panel, 0, QtCore.Qt.AlignmentFlag.AlignTop)
-            tabs.addTab(hg_container, "Honeygain")
+            hg_idx = tabs.addTab(hg_container, "Honeygain")
+            tabs.setTabEnabled(hg_idx, False)
+            tabs.setTabToolTip(hg_idx, "Coming soon \u2014 pending partnership approval")
 
         # Bright tab (Windows only)
         if sys.platform.startswith("win") and self._allow_bright:
@@ -1014,7 +1016,9 @@ class MainWindow(QtWidgets.QWidget):
             br_layout.setContentsMargins(0, 0, 0, 0)
             br_layout.setSpacing(4)
             br_layout.addWidget(self.bright_panel, 0, QtCore.Qt.AlignmentFlag.AlignTop)
-            tabs.addTab(br_container, "Web Indexing")
+            br_idx = tabs.addTab(br_container, "Web Indexing")
+            tabs.setTabEnabled(br_idx, False)
+            tabs.setTabToolTip(br_idx, "Coming soon \u2014 pending partnership approval")
 
         # Mysterium tab
         if self._allow_mysterium:

@@ -36,9 +36,36 @@ class MysteriumPanel(QtWidgets.QGroupBox):
         layout.setVerticalSpacing(8)
         layout.setColumnStretch(0, 1)
 
-        # Toggle switch (hidden — all integrations are forced ON)
+        # Header row with visible toggle
+        header = QtWidgets.QHBoxLayout()
+        header_label = QtWidgets.QLabel("Mysterium Sharing")
+        header_label.setStyleSheet("font-weight: 600;")
+        header.addWidget(header_label)
+        header.addStretch()
+        # Default ON for fresh installs; seed from cached_status.json so
+        # the visible state matches the user's saved preference at first paint
+        # (avoids 5-30s flash of ON before _on_status_ready corrects it)
         self._toggle = ToggleSwitch(width=58, height=28)
+        self._toggle.blockSignals(True)
+        try:
+            initial_checked = True  # operator-defined default for fresh installs
+            try:
+                import json
+                from miner_GUI.utils.data import data_dir_gui
+                cache_path = data_dir_gui() / "mysterium" / "cached_status.json"
+                if cache_path.exists():
+                    raw = json.loads(cache_path.read_text(encoding="utf-8"))
+                    cached_status = raw.get("status") or {}
+                    if "enabled" in cached_status:
+                        initial_checked = bool(cached_status["enabled"])
+            except Exception:
+                pass
+            self._toggle.setChecked(initial_checked)
+        finally:
+            self._toggle.blockSignals(False)
         self._toggle.stateChanged.connect(self._on_toggle_state)
+        header.addWidget(self._toggle)
+        layout.addLayout(header, 0, 0, 1, 2)
 
         self._status_label = QtWidgets.QLabel("Mysterium status: unavailable")
         self._status_label.setWordWrap(True)
@@ -230,15 +257,14 @@ class MysteriumPanel(QtWidgets.QGroupBox):
 
     # ---------- helpers ----------
     def _build_summary(self, status: MysteriumStatus) -> str:
-        from miner_GUI.ui.helpers.rewards import BM_PER_TOOL_REWARD
         from miner_GUI.ui.main_window import PENDING_MESSAGE
         if status.pending:
             return PENDING_MESSAGE
-        # If user has disabled Mysterium, show clear UX message
+        # Binary status text: 100% rewards when enabled, prompt to enable when disabled
         if not status.enabled:
-            return f"Mysterium is disabled. Enable it to add a +{int(BM_PER_TOOL_REWARD * 100)}% boost to your base rewards!"
+            return "Mysterium is disabled. Enable it to earn 100% of your rewards."
         if status.running:
-            return f"Great! Mysterium is enabled and adding a +{int(BM_PER_TOOL_REWARD * 100)}% boost to your base rewards."
+            return "Great! Mysterium is enabled. You will earn 100% of your rewards."
         # Only surface API warnings when enabled (user expects it to run)
         if status.enabled:
             if not status.port_ok:
