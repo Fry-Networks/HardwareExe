@@ -85,6 +85,18 @@ QTabBar::tab:selected {{
     border-color: {self.accent_primary};
 }}
 
+QTabBar::tab:disabled {{
+    background: {self.bg_alt};
+    color: {self.text_muted};
+    border: 1px solid {self.border};
+}}
+
+QTabBar::tab:!enabled {{
+    background: {self.bg_alt};
+    color: {self.text_muted};
+    border: 1px solid {self.border};
+}}
+
 QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
     background-color: {self.bg_alt};
     border: 1px solid {self.border};

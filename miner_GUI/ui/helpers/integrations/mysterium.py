@@ -51,7 +51,7 @@ def init_mysterium_support(self: "MainWindow") -> None:
     except Exception:
         pass
     self.mysterium_panel.refresh_clicked.connect(lambda: _on_manual_refresh_clicked(self))
-    # toggle_changed not connected — all integrations are forced ON
+    self.mysterium_panel.toggle_changed.connect(lambda enabled: handle_mysterium_toggle(self, enabled))
     self.mysterium_panel.warning_clicked.connect(lambda: show_mysterium_warning(self))
     try:
         self.mysterium_panel.diagnose_clicked.connect(lambda: diagnose_mysterium(self))

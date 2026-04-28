@@ -229,6 +229,12 @@ class MainWindow(QtWidgets.QWidget):
 
         # Apply FryNetworks black theme
         self._apply_fry_theme()
+        # Track 1.7: re-disable Honeygain/Web Indexing tabs after stylesheet
+        # polish. Synchronous call + deferred calls at 0ms and 500ms to cover
+        # all polish timing: immediate, next-iteration, and post-show.
+        self._reapply_sharing_tab_disabled_state()
+        QtCore.QTimer.singleShot(0, self._reapply_sharing_tab_disabled_state)
+        QtCore.QTimer.singleShot(500, self._reapply_sharing_tab_disabled_state)
 
         # Initialize system tray icon/menu
         self._init_tray()
@@ -1039,8 +1045,39 @@ class MainWindow(QtWidgets.QWidget):
             myst_layout.addWidget(self.mysterium_panel, 0, QtCore.Qt.AlignmentFlag.AlignTop)
             tabs.addTab(myst_container, "Mysterium")
 
+        # Track 1.7: select first enabled tab (Mysterium) so a disabled tab
+        # doesn't remain current. setTabEnabled(False) on the auto-selected
+        # first tab does not auto-advance currentIndex in Qt6.
+        for i in range(tabs.count()):
+            if tabs.isTabEnabled(i):
+                tabs.setCurrentIndex(i)
+                break
+
         return tabs
-    
+
+    def _reapply_sharing_tab_disabled_state(self) -> None:
+        """Track 1.7: re-apply disabled state to Honeygain/Web Indexing tabs.
+
+        Defence-in-depth: re-applies setTabEnabled(False) and setTabToolTip
+        after theme/style application, in case a future Qt/PySide6 update
+        resets per-tab state during stylesheet polish. Idempotent.
+        """
+        tabs = getattr(self, "_sharing_body_widget", None)
+        if not isinstance(tabs, QtWidgets.QTabWidget):
+            return
+        coming_soon_labels = ("Honeygain", "Web Indexing")
+        coming_soon_tooltip = "Coming soon \u2014 pending partnership approval"
+        first_enabled = -1
+        for i in range(tabs.count()):
+            label = tabs.tabText(i)
+            if label in coming_soon_labels:
+                tabs.setTabEnabled(i, False)
+                tabs.setTabToolTip(i, coming_soon_tooltip)
+            elif first_enabled < 0 and tabs.isTabEnabled(i):
+                first_enabled = i
+        if first_enabled >= 0:
+            tabs.setCurrentIndex(first_enabled)
+
     def _create_live_data_section(self) -> None:
         """Create live data display section. On mobile, use full width (no logo column)."""
         # Don't use a GroupBox title since the tab already says "Live Data"
