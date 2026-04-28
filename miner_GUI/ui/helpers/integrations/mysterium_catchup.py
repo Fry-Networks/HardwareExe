@@ -82,7 +82,7 @@ def check_mysterium_tos_on_startup(window: "MainWindow") -> bool:
     if show_mysterium_consent_dialog(window):
         write_tos_state(config_dir, accepted_via="gui-catchup")
         log_step("tos_catchup_accepted", {})
-        # Daemon may not be up for fresh Cohort B — don't pre-set enabled
+        window._mysterium_catchup_just_accepted = True
         return True
     else:
         write_tos_state(config_dir, accepted_via="gui-catchup-declined")

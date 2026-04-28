@@ -1,6 +1,7 @@
 """Mysterium Network integration helper functions"""
 
 from typing import TYPE_CHECKING, Optional
+import logging
 
 from PySide6 import QtCore, QtWidgets
 import shiboken6
@@ -15,6 +16,8 @@ from miner_GUI.ui.helpers import rewards as rewards_helpers
 
 if TYPE_CHECKING:
     from miner_GUI.ui.main_window import MainWindow
+
+logger = logging.getLogger(__name__)
 
 RETRY_DELAYS_MS = [5_000, 10_000, 30_000, 60_000, 300_000]
 CACHE_FRESH_AFTER_SECONDS = 60
@@ -540,8 +543,8 @@ def apply_mysterium_state(self: "MainWindow", enable: bool) -> None:
                     pass
                 self.mysterium_panel.set_busy(False)
                 return
-            # Success — start approval polling (defined below)
-            _start_polling()
+            # Success — worker completion is sufficient confirmation
+            _on_confirmed()
 
         worker.finished.connect(_on_worker_done, QtCore.Qt.ConnectionType.QueuedConnection)
         self._mysterium_setup_worker = worker  # prevent GC
@@ -621,6 +624,7 @@ def apply_mysterium_state(self: "MainWindow", enable: bool) -> None:
             expected=enable,
             on_confirmed=_on_confirmed,
             on_timeout=_on_timeout,
+            max_seconds=60,
         )
 
     # For enable path, polling is started by _on_worker_done after background work completes.

@@ -1235,6 +1235,9 @@ class MainWindow(QtWidgets.QWidget):
             tos_ok = mysterium_catchup.check_mysterium_tos_on_startup(self)
             if tos_ok:
                 mysterium_helpers.init_mysterium_support(self)
+                if getattr(self, '_mysterium_catchup_just_accepted', False):
+                    self._mysterium_catchup_just_accepted = False
+                    mysterium_helpers.apply_mysterium_state(self, enable=True)
             else:
                 if self.mysterium_panel:
                     # Track 3.1: fix V11 — clear pending so show_status_message
