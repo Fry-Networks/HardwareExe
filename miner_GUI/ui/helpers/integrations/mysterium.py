@@ -335,6 +335,10 @@ def handle_mysterium_toggle(self: "MainWindow", enabled: bool) -> None:
                 return
             else:
                 write_tos_state(config_dir, accepted_via="gui-toggle")
+                # Track 3.1: bootstrap controller if first enable after TOS re-consent
+                # (init_mysterium_support not called when tos_ok was False at startup)
+                if not getattr(self, 'mysterium_controller', None):
+                    init_mysterium_support(self)
     else:
         # Confirm disable — warn about 0% rewards
         dialog = QtWidgets.QMessageBox(self)

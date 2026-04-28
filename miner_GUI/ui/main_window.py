@@ -1237,7 +1237,19 @@ class MainWindow(QtWidgets.QWidget):
                 mysterium_helpers.init_mysterium_support(self)
             else:
                 if self.mysterium_panel:
+                    # Track 3.1: fix V11 — clear pending so show_status_message
+                    # doesn't early-return (mysterium_panel.py:159 _is_pending guard)
+                    self.mysterium_panel.set_pending_state(False)
+                    # Override stale cached_status.json toggle state
+                    self.mysterium_panel._suspend_toggle = True
+                    self.mysterium_panel._toggle.setChecked(False)
+                    self.mysterium_panel._suspend_toggle = False
                     self.mysterium_panel.show_status_message("Mysterium: TOS not accepted")
+                    # Connect toggle for re-consent path (init_mysterium_support
+                    # not called — controller doesn't exist yet)
+                    self.mysterium_panel.toggle_changed.connect(
+                        lambda enabled: mysterium_helpers.handle_mysterium_toggle(self, enabled)
+                    )
         
         # Check readiness after status data loads (pending already set at panel creation)
         QtCore.QTimer.singleShot(2500, self._refresh_sharing_gate)
