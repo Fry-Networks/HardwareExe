@@ -316,24 +316,25 @@ def handle_mysterium_toggle(self: "MainWindow", enabled: bool) -> None:
         panel._toggle.setChecked(current_state)
         panel._suspend_toggle = False
     
-    # If enabling, check consent first
+    # If enabling, check TOS consent via tos_state.json first (Track 3)
     if enabled:
-        needs_consent = True
-        if self.mysterium_controller:
-            try:
-                status = self.mysterium_controller.refresh_status()
-                if status.consent_given:
-                    needs_consent = False
-            except Exception:
-                pass
-        
-        if needs_consent and not show_mysterium_consent_dialog(self):
-            if self.mysterium_panel:
-                panel = self.mysterium_panel
-                panel._suspend_toggle = True
-                panel._toggle.setChecked(False)
-                panel._suspend_toggle = False
-            return
+        from miner_GUI.utils.tos_state import read_tos_state, write_tos_state, is_resolved_accept
+        from miner_GUI.utils.data import data_dir_gui
+        config_dir = data_dir_gui() / "config"
+        tos = read_tos_state(config_dir)
+        needs_consent = not is_resolved_accept(tos)
+
+        if needs_consent:
+            if not show_mysterium_consent_dialog(self):
+                write_tos_state(config_dir, accepted_via="gui-toggle-declined")
+                if self.mysterium_panel:
+                    panel = self.mysterium_panel
+                    panel._suspend_toggle = True
+                    panel._toggle.setChecked(False)
+                    panel._suspend_toggle = False
+                return
+            else:
+                write_tos_state(config_dir, accepted_via="gui-toggle")
     else:
         # Confirm disable — warn about 0% rewards
         dialog = QtWidgets.QMessageBox(self)
