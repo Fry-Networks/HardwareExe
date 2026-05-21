@@ -2676,7 +2676,26 @@ class MainWindow(QtWidgets.QWidget):
 
             row = read_last_line_for_sensor(sensor)
             if not row:
-                self._update_live_data({"err": "no data", "api_available": api_available, "lastUpdated": last_updated})
+                err = None
+                detected_baud = None
+                try:
+                    import json
+                    from pathlib import Path
+                    for subdir in ("measurements", "logs"):
+                        sidecar = data_dir_gui() / subdir / f"{sensor}_status.json"
+                        if sidecar.exists():
+                            with open(sidecar, "r", encoding="utf-8") as f:
+                                payload = json.load(f)
+                            err = payload.get("err")
+                            detected_baud = payload.get("_detected_baud")
+                            if err:
+                                break
+                except Exception:
+                    pass
+                live_data = {"err": err or "no data", "api_available": api_available, "lastUpdated": last_updated}
+                if detected_baud:
+                    live_data["detected_baud"] = detected_baud
+                self._update_live_data(live_data)
                 return
             data = self._map_row_to_live_data(sensor, row)
             data["api_available"] = api_available

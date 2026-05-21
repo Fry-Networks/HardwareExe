@@ -116,78 +116,176 @@ def sample_decibel(idx: Optional[int]) -> Dict[str, Any]:
         return {"err": str(exc)}
 
 
+def _validate_nmea_checksum(sentence: str) -> bool:
+    """Validate NMEA 0183 checksum (XOR of all chars between $ and *)."""
+    if not sentence.startswith("$"):
+        return False
+    if "*" not in sentence:
+        return False
+    try:
+        body = sentence[1:sentence.index("*")]
+        expected_hex = sentence[sentence.index("*") + 1:].strip()
+        if len(expected_hex) < 2:
+            return False
+        computed = 0
+        for ch in body:
+            computed ^= ord(ch)
+        return f"{computed:02X}" == expected_hex.upper()[:2]
+    except Exception:
+        return False
+
+
+def _probe_gnss_baud(port: str, skip_baud: int = 0) -> Optional[int]:
+    """Probe common GNSS baud rates and return first that yields valid NMEA."""
+    if not HAVE_SERIAL or serial is None:
+        return None
+    candidates = [9600, 57600, 38400, 115200, 4800, 19200]
+    for candidate in candidates:
+        if candidate == skip_baud:
+            continue
+        try:
+            ser = serial.Serial(port, candidate, timeout=1.0)
+        except Exception:
+            continue
+        try:
+            ser.reset_input_buffer()
+            valid = 0
+            for _ in range(30):
+                line = ser.readline()
+                if not line:
+                    continue
+                try:
+                    text = line.decode("utf-8", errors="ignore").strip()
+                except Exception:
+                    continue
+                if text.startswith("$") and _validate_nmea_checksum(text):
+                    valid += 1
+                    if valid >= 2:
+                        return candidate
+        except Exception:
+            pass
+        finally:
+            try:
+                ser.close()
+            except Exception:
+                pass
+    return None
+
+
 def sample_gnss(port: str, baud: int) -> Dict[str, Any]:
     """Sample GNSS data from a serial port (NMEA GGA/RMC)."""
     if not HAVE_SERIAL:
         return {"err": "serial support not available"}
-        if serial is None:
-            return {"err": "serial support not available"}
     assert serial is not None
     if not port:
         return {"err": "no port specified"}
 
-    try:
-        ser = serial.Serial(port, baud, timeout=1.0)
+    lines_read = 0
+    valid_nmea = 0
+    checksum_fail = 0
+    baud_used = baud
+    detected_baud: Optional[int] = None
+
+    def _attempt_read(baud_rate: int) -> Dict[str, Any]:
+        nonlocal lines_read, valid_nmea, checksum_fail
         data: Dict[str, Any] = {}
-        for _ in range(20):
-            line = ser.readline()
-            if not line:
-                break
+        ser = None
+        try:
+            ser = serial.Serial(port, baud_rate, timeout=1.0)
+            for _ in range(20):
+                line = ser.readline()
+                if not line:
+                    continue
+                lines_read += 1
+                try:
+                    text = line.decode("utf-8", errors="ignore").strip()
+                except Exception:
+                    continue
+                if not text or not text.startswith("$"):
+                    continue
+                if not _validate_nmea_checksum(text):
+                    checksum_fail += 1
+                    continue
+                valid_nmea += 1
+
+                if text.startswith("$GPGGA") or text.startswith("$GNGGA"):
+                    parts = text.split(",")
+                    if len(parts) >= 9:
+                        try:
+                            fix_quality = int(parts[6]) if parts[6] else 0
+                            fix_map = {0: "NONE", 1: "GPS", 2: "DGPS", 3: "PPS", 4: "RTK", 5: "FLOAT RTK"}
+                            data["fix"] = fix_map.get(fix_quality, f"FIX{fix_quality}")
+                            if parts[7]:
+                                data["sats"] = int(parts[7])
+                            if len(parts) > 9 and parts[9]:
+                                data["alt"] = float(parts[9])
+                            if len(parts) > 2 and parts[2] and parts[3]:
+                                lat_str, lat_dir = parts[2], parts[3]
+                                if len(lat_str) >= 5:
+                                    deg = float(lat_str[:2]); minutes = float(lat_str[2:])
+                                    lat = deg + minutes / 60.0
+                                    if lat_dir == "S":
+                                        lat = -lat
+                                    data["lat"] = lat
+                            if len(parts) > 5 and parts[4] and parts[5]:
+                                lon_str, lon_dir = parts[4], parts[5]
+                                if len(lon_str) >= 6:
+                                    deg = float(lon_str[:3]); minutes = float(lon_str[3:])
+                                    lon = deg + minutes / 60.0
+                                    if lon_dir == "W":
+                                        lon = -lon
+                                    data["lon"] = lon
+                            if len(parts) > 8 and parts[8]:
+                                data["hdop"] = float(parts[8])
+                        except Exception:
+                            pass
+
+                elif text.startswith("$GPRMC") or text.startswith("$GNRMC"):
+                    parts = text.split(",")
+                    if len(parts) >= 3:
+                        try:
+                            status = parts[2] if len(parts) > 2 else "V"
+                            if "fix" not in data:
+                                data["fix"] = "GPS" if status == "A" else "NONE"
+                        except Exception:
+                            pass
+        finally:
+            if ser is not None:
+                try:
+                    ser.close()
+                except Exception:
+                    pass
+        return data
+
+    for attempt in range(2):
+        try:
+            result = _attempt_read(baud_used)
+        except Exception as exc:
+            result = {"err": f"port open failed: {str(exc)[:60]}"}
+        if result.get("sats") is not None or result.get("fix") is not None:
+            result["_detected_baud"] = detected_baud
+            result["_diag"] = {"lines_read": lines_read, "valid_nmea": valid_nmea, "checksum_fail": checksum_fail, "baud_used": baud_used}
+            return result
+        if attempt == 0:
+            time.sleep(0.15)
+
+    if valid_nmea == 0:
+        detected_baud = _probe_gnss_baud(port, skip_baud=baud)
+        if detected_baud:
+            baud_used = detected_baud
             try:
-                text = line.decode("utf-8", errors="ignore").strip()
-            except Exception:
-                continue
-            if not text or not text.startswith("$"):
-                continue
+                result = _attempt_read(baud_used)
+            except Exception as exc:
+                result = {"err": f"port open failed: {str(exc)[:60]}"}
+            if result.get("sats") is not None or result.get("fix") is not None:
+                result["_detected_baud"] = detected_baud
+                result["_diag"] = {"lines_read": lines_read, "valid_nmea": valid_nmea, "checksum_fail": checksum_fail, "baud_used": baud_used}
+                return result
+            return {"err": "NMEA received but no valid fix — GPS may need sky view", "_detected_baud": detected_baud, "_diag": {"lines_read": lines_read, "valid_nmea": valid_nmea, "checksum_fail": checksum_fail, "baud_used": baud_used}}
 
-            if text.startswith("$GPGGA") or text.startswith("$GNGGA"):
-                parts = text.split(",")
-                if len(parts) >= 9:
-                    try:
-                        fix_quality = int(parts[6]) if parts[6] else 0
-                        fix_map = {0: "NONE", 1: "GPS", 2: "DGPS", 3: "PPS", 4: "RTK", 5: "FLOAT RTK"}
-                        data["fix"] = fix_map.get(fix_quality, f"FIX{fix_quality}")
-                        if parts[7]:
-                            data["sats"] = int(parts[7])
-                        if len(parts) > 9 and parts[9]:
-                            data["alt"] = float(parts[9])
-                        if len(parts) > 2 and parts[2] and parts[3]:
-                            lat_str, lat_dir = parts[2], parts[3]
-                            if len(lat_str) >= 5:
-                                deg = float(lat_str[:2]); minutes = float(lat_str[2:])
-                                lat = deg + minutes / 60.0
-                                if lat_dir == "S":
-                                    lat = -lat
-                                data["lat"] = lat
-                        if len(parts) > 5 and parts[4] and parts[5]:
-                            lon_str, lon_dir = parts[4], parts[5]
-                            if len(lon_str) >= 6:
-                                deg = float(lon_str[:3]); minutes = float(lon_str[3:])
-                                lon = deg + minutes / 60.0
-                                if lon_dir == "W":
-                                    lon = -lon
-                                data["lon"] = lon
-                        if len(parts) > 8 and parts[8]:
-                            data["hdop"] = float(parts[8])
-                    except Exception:
-                        pass
-
-            elif text.startswith("$GPRMC") or text.startswith("$GNRMC"):
-                parts = text.split(",")
-                if len(parts) >= 3:
-                    try:
-                        status = parts[2] if len(parts) > 2 else "V"
-                        if "fix" not in data:
-                            data["fix"] = "GPS" if status == "A" else "NONE"
-                    except Exception:
-                        pass
-
-        ser.close()
-        if data.get("sats") is not None or data.get("fix") is not None:
-            return data
-        return {"err": "no GNSS data"}
-    except Exception as exc:
-        return {"err": f"GNSS read failed: {str(exc)[:60]}"}
+    if valid_nmea == 0:
+        return {"err": "no NMEA data received (try changing baud rate)", "_diag": {"lines_read": lines_read, "valid_nmea": valid_nmea, "checksum_fail": checksum_fail, "baud_used": baud_used}}
+    return {"err": "NMEA received but no valid fix — GPS may need sky view", "_diag": {"lines_read": lines_read, "valid_nmea": valid_nmea, "checksum_fail": checksum_fail, "baud_used": baud_used}}
 
 
 def sample_geiger(port: str, baud: int) -> Dict[str, Any]:

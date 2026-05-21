@@ -6,16 +6,18 @@ and optionally forwards each sample to a backend sender callback.
 
 from __future__ import annotations
 
+import json
 import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from miner_GUI.services.service_csv_writer import ServiceCsvWriter
 from miner_GUI.services import measurement_sources as sources
-from miner_GUI.utils.data import log_step
-from miner_GUI.utils.device_config import read_device_config
+from miner_GUI.utils.data import data_dir_gui, log_step
+from miner_GUI.utils.device_config import read_device_config, save_serial_settings
 
 BackendSender = Callable[[str, Dict[str, Any]], None]
 
@@ -117,6 +119,8 @@ class MeasurementService:
 
     def _run_loop(self, loop: SensorLoop) -> None:
         while not self.stop_event.is_set():
+            err_msg: Optional[str] = None
+            data: Any = None
             try:
                 data = loop.sampler()
                 if data and "err" not in data:
@@ -125,10 +129,26 @@ class MeasurementService:
                     row.update({k: v for k, v in data.items() if not k.startswith("_")})
                     self.writer.append_row(loop.name, row, loop.fields)
                     self._send_to_backend(loop.name, row)
+                    self._clear_status_sidecar(loop.name)
+                    if data.get("_detected_baud"):
+                        try:
+                            cfg = read_device_config()
+                            port = cfg.get("serial_port") or cfg.get("gps_port") or cfg.get("geiger_port") or ""
+                            if port:
+                                save_serial_settings(port, data["_detected_baud"])
+                        except Exception:
+                            pass
                 else:
-                    self._log_throttled_error(loop.name, data.get("err") if isinstance(data, dict) else "unknown error")
+                    err_msg = data.get("err") if isinstance(data, dict) else "unknown error"
+                    self._log_throttled_error(loop.name, err_msg)
             except Exception as exc:
-                self._log_throttled_error(loop.name, str(exc))
+                err_msg = str(exc)
+                self._log_throttled_error(loop.name, err_msg)
+            if err_msg:
+                extra: Optional[Dict[str, Any]] = None
+                if isinstance(data, dict) and data.get("_detected_baud"):
+                    extra = {"_detected_baud": data["_detected_baud"]}
+                self._write_status_sidecar(loop.name, err_msg, extra)
             self.stop_event.wait(loop.interval)
 
     def _log_throttled_error(self, sensor: str, message: Optional[str]) -> None:
@@ -148,3 +168,25 @@ class MeasurementService:
             self.backend_sender(sensor, row)
         except Exception as exc:
             log_step("measurement_backend_send_failed", {"sensor": sensor, "error": str(exc)})
+
+    def _status_sidecar_path(self, sensor: str) -> Path:
+        return self.writer.log_dir / f"{sensor}_status.json"
+
+    def _write_status_sidecar(self, sensor: str, err: str, extra: Optional[Dict[str, Any]] = None) -> None:
+        try:
+            path = self._status_sidecar_path(sensor)
+            payload: Dict[str, Any] = {"err": err, "ts": datetime.utcnow().isoformat() + "Z"}
+            if extra:
+                payload.update(extra)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(payload, f)
+        except Exception:
+            pass
+
+    def _clear_status_sidecar(self, sensor: str) -> None:
+        try:
+            path = self._status_sidecar_path(sensor)
+            if path.exists():
+                path.unlink()
+        except Exception:
+            pass
