@@ -71,7 +71,7 @@ from miner_GUI.ui.helpers import rewards as rewards_helpers
 from miner_GUI.ui.helpers import pod_badge as pod_badge_helpers
 from miner_GUI.ui.helpers import network as network_helpers
 from miner_GUI.ui.helpers import measurement_display
-from miner_GUI.utils.csv_reader import read_last_line_for_sensor, parse_float, parse_int
+from miner_GUI.utils.csv_reader import read_last_line_for_sensor, parse_float, parse_int, get_today_csv_path
 
 # Import FryNetworks theme
 try:
@@ -2445,7 +2445,9 @@ class MainWindow(QtWidgets.QWidget):
         
     def _populate_serial_ports(self) -> None:
         """Populate serial port selector."""
+        log_step("_populate_serial_ports: HAVE_SERIAL=" + str(HAVE_SERIAL))
         if not HAVE_SERIAL or not hasattr(self, 'deviceCombo'):
+            log_step("_populate_serial_ports: returning early")
             return
             
         try:
@@ -2728,7 +2730,7 @@ class MainWindow(QtWidgets.QWidget):
             online_val = None
             data_val = None
             date_str = datetime.datetime.now().strftime('%Y%m%d')
-            csv_path = data_dir_gui() / "measurements" / f"aem_live_{date_str}.csv"
+            csv_path = get_today_csv_path("aem")
             row = read_last_line(csv_path)
             if row:
                 # olostep_running AND olostep_enabled = Olostep Browser is working
