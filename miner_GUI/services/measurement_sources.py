@@ -292,8 +292,6 @@ def sample_geiger(port: str, baud: int) -> Dict[str, Any]:
     """Sample Geiger counter data from serial port."""
     if not HAVE_SERIAL:
         return {"err": "serial support not available"}
-        if serial is None:
-            return {"err": "serial support not available"}
     assert serial is not None
     if not port:
         return {"err": "no port specified"}
