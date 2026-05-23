@@ -5,10 +5,10 @@ This module provides utilities for GUI to read service-written CSV files:
 2. Read full file (for Data History tab)
 
 The service writes append-only CSV files under `measurements/`:
-- measurements/bm_20260115.csv
-- measurements/satellite_20260115.csv
-- measurements/radiation_20260115.csv
-- measurements/decibel_20260115.csv
+- measurements/bm_live_20260115.csv
+- measurements/satellite_live_20260115.csv
+- measurements/radiation_live_20260115.csv
+- measurements/decibel_live_20260115.csv
 - etc.
 
 GUI polls the last line every 2-10 seconds for LiveData panel updates.
@@ -50,6 +50,7 @@ def get_today_csv_path(sensor_type: str) -> Path:
     sensor_lower = sensor_type.lower()
     filename = sensor_mapping.get(sensor_lower, sensor_lower)
     # Default to live CSV for today's live polling
+    measurements_dir.mkdir(parents=True, exist_ok=True)
     return measurements_dir / f"{filename}_live_{date_str}.csv"
 
 

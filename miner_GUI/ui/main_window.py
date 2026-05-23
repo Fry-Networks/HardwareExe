@@ -63,6 +63,7 @@ from miner_GUI.ui.helpers.integrations import bright as bright_helpers
 from miner_GUI.ui.helpers.integrations import diiisco as diiisco_helpers
 from miner_GUI.ui.helpers.integrations import honeygain as honeygain_helpers
 from miner_GUI.ui.helpers.integrations import mysterium as mysterium_helpers
+from miner_GUI.ui.helpers.integrations import mysterium_catchup
 from miner_GUI.ui.helpers.integrations import presearch as presearch_helpers
 from miner_GUI.ui.helpers.integrations import space_acres as space_acres_helpers
 from miner_GUI.ui.helpers.integrations import xmrig as xmrig_helpers
@@ -70,7 +71,7 @@ from miner_GUI.ui.helpers import rewards as rewards_helpers
 from miner_GUI.ui.helpers import pod_badge as pod_badge_helpers
 from miner_GUI.ui.helpers import network as network_helpers
 from miner_GUI.ui.helpers import measurement_display
-from miner_GUI.utils.csv_reader import read_last_line_for_sensor, parse_float, parse_int
+from miner_GUI.utils.csv_reader import read_last_line_for_sensor, parse_float, parse_int, get_today_csv_path
 
 # Import FryNetworks theme
 try:
@@ -1231,7 +1232,27 @@ class MainWindow(QtWidgets.QWidget):
         if self._allow_bright:
             bright_helpers.init_bright_support(self)
         if self._allow_mysterium:
-            mysterium_helpers.init_mysterium_support(self)
+            tos_ok = mysterium_catchup.check_mysterium_tos_on_startup(self)
+            if tos_ok:
+                mysterium_helpers.init_mysterium_support(self)
+                if getattr(self, '_mysterium_catchup_just_accepted', False):
+                    self._mysterium_catchup_just_accepted = False
+                    mysterium_helpers.apply_mysterium_state(self, enable=True)
+            else:
+                if self.mysterium_panel:
+                    # Track 3.1: fix V11 — clear pending so show_status_message
+                    # doesn't early-return (mysterium_panel.py:159 _is_pending guard)
+                    self.mysterium_panel.set_pending_state(False)
+                    # Override stale cached_status.json toggle state
+                    self.mysterium_panel._suspend_toggle = True
+                    self.mysterium_panel._toggle.setChecked(False)
+                    self.mysterium_panel._suspend_toggle = False
+                    self.mysterium_panel.show_status_message("Mysterium: TOS not accepted")
+                    # Connect toggle for re-consent path (init_mysterium_support
+                    # not called — controller doesn't exist yet)
+                    self.mysterium_panel.toggle_changed.connect(
+                        lambda enabled: mysterium_helpers.handle_mysterium_toggle(self, enabled)
+                    )
         
         # Check readiness after status data loads (pending already set at panel creation)
         QtCore.QTimer.singleShot(2500, self._refresh_sharing_gate)
@@ -1711,6 +1732,26 @@ class MainWindow(QtWidgets.QWidget):
             return
 
         if partner == "mysterium" and self.mysterium_controller and self.mysterium_panel:
+            # Defensive gate: check TOS state before auto-enabling (Track 3)
+            from miner_GUI.utils.tos_state import read_tos_state, is_resolved_accept
+            from miner_GUI.utils.data import data_dir_gui
+            tos = read_tos_state(data_dir_gui() / "config")
+            if not is_resolved_accept(tos):
+                return  # TOS not resolved — don't auto-enable from sdk_config opt-in
+            # Short-circuit if daemon already running (avoid progress dialog)
+            try:
+                import requests as _req
+                r = _req.get("http://127.0.0.1:4050/healthcheck", timeout=2)
+                if r.status_code == 200:
+                    self._mysterium_enabled = True
+                    if self.mysterium_panel:
+                        self.mysterium_panel._suspend_toggle = True
+                        self.mysterium_panel._toggle.setChecked(True)
+                        self.mysterium_panel._suspend_toggle = False
+                    self._partner_approvals_applied.add(partner)
+                    return
+            except Exception:
+                pass
             if current_enabled != desired:
                 mysterium_helpers.apply_mysterium_state(self, enable=desired)
             self._partner_approvals_applied.add(partner)
@@ -2404,7 +2445,9 @@ class MainWindow(QtWidgets.QWidget):
         
     def _populate_serial_ports(self) -> None:
         """Populate serial port selector."""
+        log_step("_populate_serial_ports: HAVE_SERIAL=" + str(HAVE_SERIAL))
         if not HAVE_SERIAL or not hasattr(self, 'deviceCombo'):
+            log_step("_populate_serial_ports: returning early")
             return
             
         try:
@@ -2635,7 +2678,26 @@ class MainWindow(QtWidgets.QWidget):
 
             row = read_last_line_for_sensor(sensor)
             if not row:
-                self._update_live_data({"err": "no data", "api_available": api_available, "lastUpdated": last_updated})
+                err = None
+                detected_baud = None
+                try:
+                    import json
+                    from pathlib import Path
+                    for subdir in ("measurements", "logs"):
+                        sidecar = data_dir_gui() / subdir / f"{sensor}_status.json"
+                        if sidecar.exists():
+                            with open(sidecar, "r", encoding="utf-8") as f:
+                                payload = json.load(f)
+                            err = payload.get("err")
+                            detected_baud = payload.get("_detected_baud")
+                            if err:
+                                break
+                except Exception:
+                    pass
+                live_data = {"err": err or "no data", "api_available": api_available, "lastUpdated": last_updated}
+                if detected_baud:
+                    live_data["detected_baud"] = detected_baud
+                self._update_live_data(live_data)
                 return
             data = self._map_row_to_live_data(sensor, row)
             data["api_available"] = api_available
@@ -2668,7 +2730,7 @@ class MainWindow(QtWidgets.QWidget):
             online_val = None
             data_val = None
             date_str = datetime.datetime.now().strftime('%Y%m%d')
-            csv_path = data_dir_gui() / "measurements" / f"aem_live_{date_str}.csv"
+            csv_path = get_today_csv_path("aem")
             row = read_last_line(csv_path)
             if row:
                 # olostep_running AND olostep_enabled = Olostep Browser is working

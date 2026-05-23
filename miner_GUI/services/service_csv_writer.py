@@ -14,19 +14,19 @@ from miner_GUI.utils.data import data_dir_gui, log_step
 class ServiceCsvWriter:
     """Simple CSV writer that appends measurement rows to daily files.
 
-    Files are named `{sensor}_YYYYMMDD.csv` under ProgramData logs.
+    Files are named `{sensor}_live_YYYYMMDD.csv` under ProgramData measurements.
     Thread-safe across multiple sensor loops.
     """
 
     def __init__(self, log_dir: Optional[Path] = None) -> None:
-        self.log_dir = Path(log_dir) if log_dir else data_dir_gui() / "logs"
+        self.log_dir = Path(log_dir) if log_dir else data_dir_gui() / "measurements"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self._locks: Dict[str, threading.Lock] = {}
 
     def path_for(self, sensor: str, ts: Optional[datetime] = None) -> Path:
         sensor_safe = (sensor or "sensor").strip().lower() or "sensor"
         dt = ts or datetime.utcnow()
-        return self.log_dir / f"{sensor_safe}_{dt.strftime('%Y%m%d')}.csv"
+        return self.log_dir / f"{sensor_safe}_live_{dt.strftime('%Y%m%d')}.csv"
 
     def append_row(self, sensor: str, row: Dict[str, Any], field_order: Optional[List[str]] = None) -> Optional[Path]:
         """Append a single measurement row to the sensor CSV.

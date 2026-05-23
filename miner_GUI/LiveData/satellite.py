@@ -54,8 +54,20 @@ class SatellitePanel(QtWidgets.QWidget):
             # Expect data like {'sats': int, 'fix': str/int, 'lat': float, 'lon': float, 'alt': float, 'err': str}
             err = data.get('err')
             if err:
-                self.statusLbl.setText(f"⚠ Error: {err}")
-                self.detailsLbl.setText("")
+                hints = []
+                err_lower = str(err).lower()
+                if "baud" in err_lower:
+                    hints.append("Try a different baud rate (e.g., 57600).")
+                if "port open" in err_lower:
+                    hints.append("Check that the device is connected.")
+                if "sky view" in err_lower:
+                    hints.append("Move antenna to open sky.")
+                detected = data.get('detected_baud') or data.get('_detected_baud')
+                if detected:
+                    hints.append(f"Auto-detected baud: {detected}")
+                hint_text = "  ".join(hints)
+                self.statusLbl.setText(f"⚠ {err}")
+                self.detailsLbl.setText(hint_text)
                 return
             
             sats = data.get('sats')
