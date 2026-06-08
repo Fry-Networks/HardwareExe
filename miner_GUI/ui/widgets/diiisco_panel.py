@@ -40,10 +40,12 @@ class DiiiscoPanel(QtWidgets.QGroupBox):
 
         # Toggle switch (hidden — all integrations are forced ON)
         self._toggle = ToggleSwitch(width=58, height=28)
+        self._toggle.setAccessibleName("diiisco_toggle_switch")
         self._toggle.stateChanged.connect(self._on_toggle_state)
 
         # Status label
         self._status_label = QtWidgets.QLabel("Diiisco Node: checking status...")
+        self._status_label.setAccessibleName("diiisco_label_status")
         self._status_label.setWordWrap(True)
         self._status_label.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Expanding,
@@ -54,6 +56,7 @@ class DiiiscoPanel(QtWidgets.QGroupBox):
 
         # Stats row
         self._stats_label = QtWidgets.QLabel("")
+        self._stats_label.setAccessibleName("diiisco_label_stats")
         self._stats_label.setWordWrap(True)
         layout.addWidget(self._stats_label, 2, 0, 1, 2)
 
@@ -62,6 +65,7 @@ class DiiiscoPanel(QtWidgets.QGroupBox):
         btn_row.addStretch(1)
 
         self._refresh_btn = QtWidgets.QPushButton("Refresh")
+        self._refresh_btn.setAccessibleName("diiisco_button_refresh")
         self._refresh_btn.clicked.connect(self._on_refresh_clicked)
         self._refresh_btn.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Minimum,

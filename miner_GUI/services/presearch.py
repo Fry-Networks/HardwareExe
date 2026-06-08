@@ -163,6 +163,23 @@ def load_config() -> PresearchConfig:
     return PresearchConfig(path=path, existed=existed, raw=data)
 
 
+import shutil
+
+
+def _find_docker() -> str:
+    """Return the path to docker.exe, searching common Windows locations first."""
+    if os.name == "nt":
+        for candidate in [
+            r"C:\Program Files\Docker\Docker\resources\bin\docker.exe",
+            r"C:\Program Files\Docker\Docker\docker.exe",
+        ]:
+            if os.path.exists(candidate):
+                return candidate
+    # Fall back to PATH lookup
+    docker = shutil.which("docker")
+    return docker if docker else "docker"
+
+
 class PresearchController:
     """Controller to manage Presearch Node lifecycle."""
 
@@ -175,7 +192,7 @@ class PresearchController:
         """Check if Docker is available."""
         try:
             result = subprocess.run(
-                ["docker", "--version"],
+                [_find_docker(), "--version"],
                 capture_output=True,
                 timeout=5,
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
@@ -189,7 +206,7 @@ class PresearchController:
         try:
             creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
             result = subprocess.run(
-                ["docker"] + args,
+                [_find_docker()] + args,
                 capture_output=True,
                 text=True,
                 timeout=timeout,

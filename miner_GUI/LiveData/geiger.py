@@ -13,10 +13,15 @@ class GeigerPanel(QtWidgets.QWidget):
         lay.setSpacing(8)
 
         self.deviceLbl = QtWidgets.QLabel("")
+        self.deviceLbl.setAccessibleName("livedata_geiger_label_device_lbl")
         self.cpmLbl = QtWidgets.QLabel("-- CPM")
+        self.cpmLbl.setAccessibleName("livedata_geiger_label_cpm_lbl")
         self.doseLbl = QtWidgets.QLabel("")
+        self.doseLbl.setAccessibleName("livedata_geiger_label_dose_lbl")
         self.totalLbl = QtWidgets.QLabel("")
+        self.totalLbl.setAccessibleName("livedata_geiger_label_total_lbl")
         self.statusLbl = QtWidgets.QLabel("waiting for data…")
+        self.statusLbl.setAccessibleName("livedata_geiger_label_status_lbl")
         
         try:
             self.deviceLbl.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)

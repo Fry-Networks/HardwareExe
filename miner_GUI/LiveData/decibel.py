@@ -11,6 +11,8 @@ class DecibelPanel(QtWidgets.QWidget):
         self._min_db = -90.0
         self._max_db = 0.0
         self._device = ""
+        self._last_dbfs = None
+        self._last_color = None
 
         lay = QtWidgets.QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -18,6 +20,7 @@ class DecibelPanel(QtWidgets.QWidget):
 
         # One-line info to match previous look
         self.infoLbl = QtWidgets.QLabel("")
+        self.infoLbl.setAccessibleName("livedata_audio_label_info_lbl")
         try:
             self.infoLbl.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
         except Exception:
@@ -25,6 +28,7 @@ class DecibelPanel(QtWidgets.QWidget):
 
         # Visible bar showing level; width is configurable
         self.bar = QtWidgets.QProgressBar()
+        self.bar.setAccessibleName("livedata_audio_progressbar_bar")
         try:
             self.bar.setFixedWidth(int(width))
             self.bar.setFixedHeight(22)
@@ -62,9 +66,14 @@ class DecibelPanel(QtWidgets.QWidget):
     def on_tick(self, data: dict):
         try:
             if 'err' in data and data.get('dbfs') is None:
-                self.infoLbl.setText(f"Device: {self._device}  •  error: {data.get('err')}")
+                err_text = f"Device: {self._device}  •  error: {data.get('err')}"
+                if err_text != self._last_dbfs:
+                    self._last_dbfs = err_text
+                    self.infoLbl.setText(err_text)
                 self.bar.setValue(0)
-                self.bar.setStyleSheet("QProgressBar::chunk { background-color: #7f1d1d; border-radius: 12px; }")
+                if self._last_color != "#7f1d1d":
+                    self._last_color = "#7f1d1d"
+                    self.bar.setStyleSheet("QProgressBar::chunk { background-color: #7f1d1d; border-radius: 12px; }")
                 return
             val = data.get('dbfs')
             if val is None:
@@ -73,11 +82,17 @@ class DecibelPanel(QtWidgets.QWidget):
                 v = float(val)
             except Exception:
                 return
-            # Update text to mirror original behavior
-            self.infoLbl.setText(f"Device: {self._device}  •  {v:.1f} dBFS")
+            # Update text only when dbfs changes (avoid redundant repaints)
+            dbfs_text = f"Device: {self._device}  •  {v:.1f} dBFS"
+            if dbfs_text != self._last_dbfs:
+                self._last_dbfs = dbfs_text
+                self.infoLbl.setText(dbfs_text)
             # Map -90..0 dBFS → 0..100 %
             pct = int(max(0.0, min(100.0, 100.0 * (v - self._min_db) / (self._max_db - self._min_db))))
             self.bar.setValue(pct)
-            self.bar.setStyleSheet(f"QProgressBar::chunk {{ background-color: {self._color_for_pct(pct)}; border-radius: 12px; }}")
+            color = self._color_for_pct(pct)
+            if color != self._last_color:
+                self._last_color = color
+                self.bar.setStyleSheet(f"QProgressBar::chunk {{ background-color: {color}; border-radius: 12px; }}")
         except Exception:
             pass

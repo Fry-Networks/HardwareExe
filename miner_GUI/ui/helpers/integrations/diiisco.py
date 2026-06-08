@@ -32,6 +32,23 @@ def _is_rdn_live_panel(panel) -> bool:
     return panel is not None and hasattr(panel, 'diiisco_refresh_clicked')
 
 
+import os
+import shutil
+
+
+def _find_docker() -> str:
+    """Return the path to docker.exe, searching common Windows locations first."""
+    if os.name == "nt":
+        for candidate in [
+            r"C:\Program Files\Docker\Docker\resources\bin\docker.exe",
+            r"C:\Program Files\Docker\Docker\docker.exe",
+        ]:
+            if os.path.exists(candidate):
+                return candidate
+    docker = shutil.which("docker")
+    return docker if docker else "docker"
+
+
 def _check_docker_available() -> tuple[bool, str]:
     """Pre-flight: read current reward week's status JSON and check for docker status."""
     try:
@@ -45,10 +62,32 @@ def _check_docker_available() -> tuple[bool, str]:
             if docker_status is True:
                 return (True, "")
             elif docker_status is False:
-                return (False, "Docker is not installed or not running.\nPlease install and start Docker to enable Diiisco.")
+                # Fall back to direct check rather than trusting stale JSON
+                pass
             else:
-                return (False, "Unable to determine Docker status.\nPlease check that the miner service is running.")
+                pass
     except Exception:
+        pass
+    # Fallback: direct subprocess check
+    try:
+        import os
+        import subprocess
+        import traceback
+        creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+        result = subprocess.run(
+            [_find_docker(), "--version"],
+            capture_output=True,
+            timeout=5,
+            creationflags=creationflags,
+        )
+        if result.returncode == 0:
+            return (True, "")
+        else:
+            with open(r"C:\tmp\docker_debug_diiisco.log", "a", encoding="utf-8") as f:
+                f.write(f"docker --version rc={result.returncode} stderr={result.stderr!r}\n")
+    except Exception as exc:
+        with open(r"C:\tmp\docker_debug_diiisco.log", "a", encoding="utf-8") as f:
+            f.write(f"docker --version exc={exc}\n{traceback.format_exc()}\n")
         pass
     return (False, "Unable to determine Docker status.\nPlease check that the miner service is running.")
 

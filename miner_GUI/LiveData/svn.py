@@ -32,6 +32,7 @@ class MiningStatsTab(QtWidgets.QGroupBox):
 
         # Large status display area
         self._status_label = QtWidgets.QLabel("Checking status...")
+        self._status_label.setAccessibleName("livedata_svn_label_status")
         self._status_label.setWordWrap(True)
         self._status_label.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Expanding,
@@ -112,6 +113,7 @@ class SvnPanel(QtWidgets.QWidget):
 
         # Create tab widget
         tabs = QtWidgets.QTabWidget()
+        tabs.setAccessibleName("livedata_svn_tabwidget")
         tabs.setTabPosition(QtWidgets.QTabWidget.TabPosition.North)
         tabs.setDocumentMode(True)
         tabs.setUsesScrollButtons(False)

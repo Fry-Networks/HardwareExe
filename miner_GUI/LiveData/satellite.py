@@ -14,8 +14,11 @@ class SatellitePanel(QtWidgets.QWidget):
         lay.setSpacing(4)
 
         self.deviceLbl = QtWidgets.QLabel("")
+        self.deviceLbl.setAccessibleName("livedata_gps_label_device_lbl")
         self.statusLbl = QtWidgets.QLabel("waiting for data…")
+        self.statusLbl.setAccessibleName("livedata_gps_label_status_lbl")
         self.detailsLbl = QtWidgets.QLabel("")
+        self.detailsLbl.setAccessibleName("livedata_gps_label_details_lbl")
         try:
             self.deviceLbl.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
             self.statusLbl.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)

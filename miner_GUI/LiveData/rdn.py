@@ -1,4 +1,4 @@
-"""LiveData panel for RDN (Rewards Decentralization Node) miners.
+"""LiveData panel for RDN (Compute Node) miners.
 
 Displays Presearch and Diiisco node status with toggle controls in tabbed layout.
 """
@@ -27,7 +27,8 @@ class ToggleSwitch(QtWidgets.QCheckBox):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setChecked(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
-    
+        self.setAccessibleName("livedata_rdn_toggle_switch")
+
     def setChecked(self, checked: bool) -> None:
         """Set the checked state programmatically without emitting stateChanged."""
         was_blocked = self.signalsBlocked()
@@ -116,10 +117,12 @@ class ServiceNodeTab(QtWidgets.QGroupBox):
 
         # Toggle switch (hidden — all integrations are forced ON)
         self._toggle = ToggleSwitch(width=58, height=28)
+        self._toggle.setAccessibleName("livedata_rdn_toggle_switch")
         self._toggle.stateChanged.connect(self._on_toggle_state)
 
         # Large status display area
         self._status_label = QtWidgets.QLabel("Checking status...")
+        self._status_label.setAccessibleName("livedata_rdn_label_status")
         self._status_label.setWordWrap(True)
         self._status_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
         self._status_label.setMinimumHeight(60)
@@ -235,6 +238,7 @@ class RdnPanel(QtWidgets.QWidget):
 
         # Create tab widget
         tabs = QtWidgets.QTabWidget()
+        tabs.setAccessibleName("livedata_rdn_tabwidget")
         tabs.setTabPosition(QtWidgets.QTabWidget.TabPosition.North)
         tabs.setDocumentMode(True)
         tabs.setUsesScrollButtons(False)

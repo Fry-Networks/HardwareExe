@@ -46,6 +46,7 @@ class MysteriumPanel(QtWidgets.QGroupBox):
         # the visible state matches the user's saved preference at first paint
         # (avoids 5-30s flash of ON before _on_status_ready corrects it)
         self._toggle = ToggleSwitch(width=58, height=28)
+        self._toggle.setAccessibleName("mysterium_toggle_switch")
         self._toggle.blockSignals(True)
         try:
             initial_checked = True  # operator-defined default for fresh installs
@@ -68,6 +69,7 @@ class MysteriumPanel(QtWidgets.QGroupBox):
         layout.addLayout(header, 0, 0, 1, 2)
 
         self._status_label = QtWidgets.QLabel("Mysterium status: unavailable")
+        self._status_label.setAccessibleName("mysterium_label_status")
         self._status_label.setWordWrap(True)
         self._status_label.setMinimumHeight(36)
         layout.addWidget(self._status_label, 1, 0, 1, 2)
@@ -76,15 +78,18 @@ class MysteriumPanel(QtWidgets.QGroupBox):
         btn_row.addStretch(1)
 
         self._warn_btn = QtWidgets.QPushButton("Warnings")
+        self._warn_btn.setAccessibleName("mysterium_button_warn")
         self._warn_btn.setVisible(False)
         self._warn_btn.clicked.connect(self._on_warning_clicked)
         btn_row.addWidget(self._warn_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self._diagnose_btn = QtWidgets.QPushButton("Diagnose")
+        self._diagnose_btn.setAccessibleName("mysterium_button_diagnose")
         self._diagnose_btn.clicked.connect(self._on_diagnose_clicked)
         btn_row.addWidget(self._diagnose_btn, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
 
         self._details_btn = QtWidgets.QPushButton("Refresh")
+        self._details_btn.setAccessibleName("mysterium_button_details")
         self._details_btn.clicked.connect(self._on_refresh_clicked)
         btn_row.addWidget(self._details_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
 

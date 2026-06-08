@@ -1,7 +1,29 @@
 """Single instance management for preventing multiple miner instances."""
 
+import sys
+
 from PySide6 import QtCore
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
+
+
+def _try_create_mutex(name: str) -> bool:
+    """Windows-only named mutex for early single-instance guard.
+    Returns True if this is the first instance, False if another exists."""
+    if sys.platform != "win32":
+        return True
+    try:
+        import ctypes
+        from ctypes import wintypes
+        CreateMutexW = ctypes.windll.kernel32.CreateMutexW
+        CreateMutexW.argtypes = [wintypes.LPVOID, wintypes.BOOL, wintypes.LPCWSTR]
+        CreateMutexW.restype = wintypes.HANDLE
+        ERROR_ALREADY_EXISTS = 183
+        handle = CreateMutexW(None, False, name)
+        if not handle:
+            return False
+        return ctypes.windll.kernel32.GetLastError() != ERROR_ALREADY_EXISTS
+    except Exception:
+        return True
 
 
 class SingleInstance(QtCore.QObject):
@@ -16,11 +38,15 @@ class SingleInstance(QtCore.QObject):
     
     def start_or_signal(self) -> bool:
         """Start server or signal existing instance.
-        
+
         Returns:
             True if this is the first instance (server started successfully)
             False if another instance exists (signal sent)
         """
+        # Fast Windows mutex guard before Qt event loop is ready
+        if not _try_create_mutex(self.key):
+            return False
+
         # First, try to connect to an existing instance
         sock = QLocalSocket()
         sock.connectToServer(self.key, QtCore.QIODevice.OpenModeFlag.WriteOnly)

@@ -100,7 +100,7 @@ def update_rewards_hint(self) -> None:
             base_note = f"Base rewards {int(base * 100)}% (+{per_pct}% when sharing on)."
             status = f"{label}:{'on' if enabled_flag else 'off'}"
         else:
-            pretty = {"honeygain": "Honeygain", "bright": "Web Indexing", "mysterium": "Mysterium"}.get(mode, "Sharing")
+            pretty = {"mysterium": "Mysterium"}.get(mode, "Sharing")
             per_pct = int(BM_PER_TOOL_REWARD * 100)
             base_note = f"Base rewards start at {int(base * 100)}%; {pretty} adds +{per_pct}% when enabled."
             status = f"{pretty}: {'enabled' if enabled_flag else 'disabled'}"
@@ -131,16 +131,8 @@ def update_rewards_hint(self) -> None:
         else:
             base_pct = int(base * 100)
             per_pct = int(BM_PER_TOOL_REWARD * 100)
-            base_note = (
-                f"Base rewards start at {base_pct}%. Honeygain, Web Indexing, and Mysterium each add +{per_pct}%."
-                if is_windows else
-                f"Base rewards start at {base_pct}%. Honeygain and Mysterium each add +{per_pct}%."
-            )
-            status = (
-                f"Honeygain: {'enabled' if h_enabled else 'disabled'} | "
-                + (f"Web Indexing: {'enabled' if b_enabled else 'disabled'} | " if is_windows and self._allow_bright else "")
-                + f"Mysterium: {'enabled' if m_enabled else 'disabled'}"
-            )
+            base_note = "You earn rewards when Mysterium is running."
+            status = f"Mysterium: {'enabled' if m_enabled else 'disabled'}"
 
     # If MAC is still missing (started offline), re-try network discovery.
     if not getattr(self, 'activeMacAddress', None):

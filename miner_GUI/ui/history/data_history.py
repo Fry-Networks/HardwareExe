@@ -58,6 +58,7 @@ class DataHistoryWidget(QtWidgets.QWidget):
         title_row.addWidget(title)
 
         self.open_btn = QtWidgets.QPushButton("Open CSV")
+        self.open_btn.setAccessibleName("history_data_button_open")
         if self._is_mobile():
             self.open_btn.setMinimumWidth(80)
         self.open_btn.clicked.connect(self._open_csv_file)
@@ -70,6 +71,7 @@ class DataHistoryWidget(QtWidgets.QWidget):
         date_layout.addWidget(QtWidgets.QLabel("Select Date:"))
         
         self.date_edit = QtWidgets.QDateEdit()
+        self.date_edit.setAccessibleName("history_data_dateedit_date")
         self.date_edit.setObjectName("dataHistoryDateEdit")
         self.date_edit.setDate(QtCore.QDate.currentDate())
         self.date_edit.setCalendarPopup(True)
@@ -110,6 +112,7 @@ class DataHistoryWidget(QtWidgets.QWidget):
         # Prev/Next day controls (text arrows for desktop, compact on mobile)
         is_mobile = self._is_mobile()
         self.prev_btn = QtWidgets.QPushButton("◀ Prev" if not is_mobile else "◀")
+        self.prev_btn.setAccessibleName("history_data_button_prev")
         self.prev_btn.setToolTip("Previous day")
         self.prev_btn.clicked.connect(self._prev_day)
         if is_mobile:
@@ -119,6 +122,7 @@ class DataHistoryWidget(QtWidgets.QWidget):
         date_layout.addWidget(self.prev_btn)
         
         self.next_btn = QtWidgets.QPushButton("Next ▶" if not is_mobile else "▶")
+        self.next_btn.setAccessibleName("history_data_button_next")
         self.next_btn.setToolTip("Next day")
         self.next_btn.clicked.connect(self._next_day)
         if is_mobile:
@@ -128,6 +132,7 @@ class DataHistoryWidget(QtWidgets.QWidget):
         date_layout.addWidget(self.next_btn)
         
         self.refresh_btn = QtWidgets.QPushButton("🔄" if is_mobile else "🔄 Refresh")
+        self.refresh_btn.setAccessibleName("history_data_button_refresh")
         self.refresh_btn.setToolTip("Reload data for selected date")
         self.refresh_btn.clicked.connect(self._load_data)
         if is_mobile:
@@ -141,6 +146,7 @@ class DataHistoryWidget(QtWidgets.QWidget):
         
         # Status label (muted text color from theme)
         self.status_label = QtWidgets.QLabel("Loading data...")
+        self.status_label.setAccessibleName("history_data_label_status")
         if hasattr(self, '_theme') and self._theme:
             self.status_label.setStyleSheet(f"color: {self._theme.text_muted}; font-size: 10pt;")
         layout.addWidget(self.status_label)

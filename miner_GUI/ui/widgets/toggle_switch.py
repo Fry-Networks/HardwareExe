@@ -22,6 +22,7 @@ class ToggleSwitch(QtWidgets.QCheckBox):
         self._syncing = False
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setChecked(False)
+        self.setAccessibleName("toggle_switch")
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
 
     def set_syncing(self, syncing: bool) -> None:

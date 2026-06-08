@@ -192,14 +192,14 @@ class MainWindow(QtWidgets.QWidget):
         self._sharing_mode = (mode_env or build_default or "all").lower()
         if MINER_CODE != "BM":
             self._sharing_mode = "all"
-        self._allow_honeygain = MINER_CODE == "BM" and self._sharing_mode in ("all", "honeygain")
-        self._allow_bright = MINER_CODE == "BM" and self._sharing_mode in ("all", "bright")
+        self._allow_honeygain = False  # Disabled — only Mysterium active
+        self._allow_bright = False     # Disabled — only Mysterium active
         self._allow_mysterium = MINER_CODE == "BM" and self._sharing_mode in ("all", "mysterium")
         
         # SDN integrations (Space Acres for storage nodes)
         self._allow_space_acres = MINER_CODE == "SDN"
 
-        # RDN integrations (Presearch and Diiisco for rewards decentralization nodes)
+        # RDN integrations (Presearch and Diiisco for Compute Nodes)
         self._allow_presearch = MINER_CODE == "RDN"
         self._allow_diiisco = MINER_CODE == "RDN"
 
@@ -272,6 +272,14 @@ class MainWindow(QtWidgets.QWidget):
         # Note: Honeygain/Bright/Mysterium support is initialized in _attach_sharing_panels
         # SDN panels (Space Acres) initialized in _attach_sdn_panels
         # RDN panels (Presearch, Diiisco) initialized in _attach_service_node_panels
+
+    def auto_start_service_or_exit(self):
+        """Stub: service startup is managed by NSSM installer."""
+        try:
+            from miner_GUI.utils.data import log_step
+            log_step("auto_start_service_or_exit_stub", {"reason": "NSSM manages PoC service"})
+        except Exception:
+            pass
 
     def _is_widget_alive(self, widget: Optional[QtWidgets.QWidget]) -> bool:
         """Best-effort guard against using deleted Qt objects."""
@@ -579,6 +587,7 @@ class MainWindow(QtWidgets.QWidget):
         else:
             # Fallback banner
             self.banner = QtWidgets.QLabel(title_text)
+            self.banner.setAccessibleName("main_label_banner")
             self.banner.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             size = 18 if is_mobile else 24
             pad = 14 if is_mobile else 20
@@ -587,6 +596,7 @@ class MainWindow(QtWidgets.QWidget):
     def _create_api_warning_banner(self) -> None:
         """Create the API unavailable warning banner (initially hidden)."""
         self.api_warning_banner = QtWidgets.QFrame()
+        self.api_warning_banner.setAccessibleName("main_frame_api_warning_banner")
         self.api_warning_banner.setObjectName("apiWarningBanner")
         
         layout = QtWidgets.QHBoxLayout(self.api_warning_banner)
@@ -627,6 +637,7 @@ class MainWindow(QtWidgets.QWidget):
     def _create_stale_data_banner(self) -> None:
         """Create the stale-data warning banner (initially hidden)."""
         self.stale_data_banner = QtWidgets.QFrame()
+        self.stale_data_banner.setAccessibleName("main_frame_stale_data_banner")
         self.stale_data_banner.setObjectName("staleDataBanner")
 
         layout = QtWidgets.QHBoxLayout(self.stale_data_banner)
@@ -643,6 +654,7 @@ class MainWindow(QtWidgets.QWidget):
             "<b>Status Data Is Stale</b> \u2014 The local status file has not been updated in over 15 minutes. "
             "The miner service may need attention."
         )
+        self._stale_data_message.setAccessibleName("main_label_stale_data_message")
         self._stale_data_message.setWordWrap(True)
         self._stale_data_message.setTextFormat(QtCore.Qt.TextFormat.RichText)
         layout.addWidget(self._stale_data_message, 1)
@@ -665,10 +677,12 @@ class MainWindow(QtWidgets.QWidget):
     def _create_input_form(self) -> None:
         """Create the miner key input form."""
         self.keyEdit = QtWidgets.QLineEdit()
+        self.keyEdit.setAccessibleName("miner_key_input")
         self.keyEdit.setPlaceholderText(f"{MINER_CODE}-[A-Z0-9]{{32}}")
         self.keyEdit.setReadOnly(True)  # Miner key is read-only, set by installer
         
         self.regexHint = QtWidgets.QLabel('')
+        self.regexHint.setAccessibleName("main_label_regex_hint")
         self.regexHint.setObjectName("hint")
         
         self.form = QtWidgets.QFormLayout()
@@ -685,6 +699,7 @@ class MainWindow(QtWidgets.QWidget):
     def _create_settings_section(self) -> None:
         """Create settings section based on miner type."""
         self.settingsGb = QtWidgets.QGroupBox("Settings")
+        self.settingsGb.setAccessibleName("main_groupbox_settings_gb")
         if getattr(self, "_screen_size_pref", "") == "mobile":
             self.settingsGb.setStyleSheet(
                 """
@@ -712,18 +727,27 @@ class MainWindow(QtWidgets.QWidget):
     def _create_network_settings(self) -> None:
         """Create network-related settings."""
         self.networkLabel = QtWidgets.QLabel("Active network")
+        self.networkLabel.setAccessibleName("main_label_network_label")
         self.networkValueLabel = QtWidgets.QLabel("-")
+        self.networkValueLabel.setAccessibleName("main_label_network_value_label")
         self.macTitle = QtWidgets.QLabel("MAC")
+        self.macTitle.setAccessibleName("main_label_mac_title")
         self.macValueLabel = QtWidgets.QLabel("-")
+        self.macValueLabel.setAccessibleName("main_label_mac_value_label")
         self.macRegisteredTitle = QtWidgets.QLabel("Registered")
+        self.macRegisteredTitle.setAccessibleName("main_label_mac_registered_title")
         self.macRegisteredValue = QtWidgets.QLabel("-")
+        self.macRegisteredValue.setAccessibleName("main_label_mac_registered_value")
         self.macMatchCheck = QtWidgets.QCheckBox("match")
+        self.macMatchCheck.setAccessibleName("main_checkbox_mac_match_check")
         self.macMatchCheck.setEnabled(False)
         self.macMatchCheck.setVisible(False)
         # Unified registration status label (MAC + Location combined)
         self.registrationStatusLabel = QtWidgets.QLabel("")
+        self.registrationStatusLabel.setAccessibleName("main_label_registration_status_label")
         self.registrationStatusLabel.setToolTip("Active MAC matches your registered MAC address.")
         self.registrationStatusIcon = QtWidgets.QLabel()
+        self.registrationStatusIcon.setAccessibleName("main_label_registration_status_icon")
         self.registrationStatusIcon.setToolTip(self.registrationStatusLabel.toolTip())
         try:
             warn_icon = self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MessageBoxWarning)
@@ -734,6 +758,7 @@ class MainWindow(QtWidgets.QWidget):
         self.registrationStatusLabel.setVisible(False)
         # Optional info panel (hidden by default) for richer instructions
         self.macInfoLabel = QtWidgets.QLabel("Tip: If you changed network adapters or PCs, log in to your Fry Networks dashboard and update the MAC for this miner key.")
+        self.macInfoLabel.setAccessibleName("main_label_mac_info_label")
         self.macInfoLabel.setWordWrap(True)
         self.macInfoLabel.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Expanding,
@@ -744,10 +769,14 @@ class MainWindow(QtWidgets.QWidget):
     def _create_audio_settings(self) -> None:
         """Create audio device settings."""
         self.deviceLabel = QtWidgets.QLabel("Microphone")
+        self.deviceLabel.setAccessibleName("main_label_device_label")
         self.deviceCombo = QtWidgets.QComboBox()
+        self.deviceCombo.setAccessibleName("microphone_selector")
         self.deviceCombo.setFixedWidth(360)
         self.deviceHelp = QtWidgets.QLabel("")
+        self.deviceHelp.setAccessibleName("main_label_device_help")
         self.btnApplyMic = QtWidgets.QPushButton("Update")
+        self.btnApplyMic.setAccessibleName("apply_microphone_button")
         self.btnApplyMic.setVisible(False)
         
         self._populate_microphones()
@@ -755,11 +784,15 @@ class MainWindow(QtWidgets.QWidget):
     def _create_serial_settings(self, device_type: str) -> None:
         """Create serial port settings."""
         self.deviceLabel = QtWidgets.QLabel(device_type)
+        self.deviceLabel.setAccessibleName("main_label_device_label")
         self.deviceCombo = QtWidgets.QComboBox()
+        self.deviceCombo.setAccessibleName("serial_port_selector")
         self.deviceCombo.setFixedWidth(240)
-        
+
         self.baudLabel = QtWidgets.QLabel("Baud Rate")
+        self.baudLabel.setAccessibleName("main_label_baud_label")
         self.baudCombo = QtWidgets.QComboBox()
+        self.baudCombo.setAccessibleName("baud_rate_selector")
         self.baudCombo.setFixedWidth(120)
         
         # Common baud rates
@@ -817,9 +850,10 @@ class MainWindow(QtWidgets.QWidget):
             from datetime import date
             week_doc = load_status_week_for_date(date.today())
         except Exception:
-            return
+            week_doc = None
 
-        if not isinstance(week_doc, dict):
+        if not isinstance(week_doc, dict) or not week_doc:
+            self._clear_all_sharing_pending()
             return
 
         mac_mismatch = week_doc.get("mac_mismatch")
@@ -911,7 +945,25 @@ class MainWindow(QtWidgets.QWidget):
                     di.set_pending_state(True)
                 except Exception:
                     pass
-    
+
+        # SVN tools
+        if self.xmrig_panel:
+            try:
+                if hasattr(self.xmrig_panel, "_status_label"):
+                    self.xmrig_panel._status_label.setText(PENDING_MESSAGE)
+                self.xmrig_panel.set_pending_state(True)
+            except Exception:
+                pass
+        # Also handle LiveData SVN panel
+        elif self.live_panel is not None:
+            xmr = getattr(self.live_panel, 'xmrig_panel', None)
+            if xmr is not None:
+                try:
+                    xmr._status_label.setText(PENDING_MESSAGE)
+                    xmr.set_pending_state(True)
+                except Exception:
+                    pass
+
     def _clear_all_sharing_pending(self) -> None:
         """Re-enable all sharing tool toggles and clear pending warnings."""
         # BM sharing tools
@@ -977,9 +1029,27 @@ class MainWindow(QtWidgets.QWidget):
                 except Exception:
                     pass
 
+        # SVN tools
+        if self.xmrig_panel:
+            try:
+                self.xmrig_panel.set_pending_state(False)
+                self.xmrig_panel._status_label.setText("")
+            except Exception:
+                pass
+        # Also handle LiveData SVN panel
+        elif self.live_panel is not None:
+            xmr = getattr(self.live_panel, 'xmrig_panel', None)
+            if xmr is not None:
+                try:
+                    xmr.set_pending_state(False)
+                    xmr._status_label.setText("")
+                except Exception:
+                    pass
+
     def _build_sharing_tabs_widget(self) -> QtWidgets.QWidget:
         """Build the original sharing QTabWidget body (Honeygain/Bright/Mysterium)."""
         tabs = QtWidgets.QTabWidget()
+        tabs.setAccessibleName("main_tabwidget_sharing")
         tabs.setTabPosition(QtWidgets.QTabWidget.TabPosition.North)
         tabs.setDocumentMode(True)
         tabs.setUsesScrollButtons(False)
@@ -1083,6 +1153,7 @@ class MainWindow(QtWidgets.QWidget):
         """Create live data display section. On mobile, use full width (no logo column)."""
         # Don't use a GroupBox title since the tab already says "Live Data"
         self.liveGb = QtWidgets.QGroupBox("")
+        self.liveGb.setAccessibleName("main_groupbox_live_gb")
 
         is_mobile = getattr(self, "_screen_size_pref", "") == "mobile"
 
@@ -1210,6 +1281,7 @@ class MainWindow(QtWidgets.QWidget):
         container.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
 
         self.rewards_hint = QtWidgets.QLabel()
+        self.rewards_hint.setAccessibleName("main_label_rewards_hint")
         self.rewards_hint.setObjectName("hint")
         self.rewards_hint.setWordWrap(True)
         self.rewards_hint.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
@@ -1286,6 +1358,7 @@ class MainWindow(QtWidgets.QWidget):
 
         # Build tabs for SDN integrations
         tabs = QtWidgets.QTabWidget()
+        tabs.setAccessibleName("main_tabwidget_storage")
 
         # Space Acres tab
         if self._allow_space_acres:
@@ -1347,6 +1420,7 @@ class MainWindow(QtWidgets.QWidget):
 
         # Build tabs for SVN integrations
         tabs = QtWidgets.QTabWidget()
+        tabs.setAccessibleName("main_tabwidget_service_nodes")
 
         # Presearch tab
         if self._allow_presearch:
@@ -1403,6 +1477,7 @@ class MainWindow(QtWidgets.QWidget):
                 live_panel.xmrig_panel.set_pending_state(True)
 
                 xmrig_helpers.init_xmrig_support(self)
+                QtCore.QTimer.singleShot(2500, self._refresh_sharing_gate)
             return
 
         # Fallback: create standalone panels (legacy mode)
@@ -1415,6 +1490,7 @@ class MainWindow(QtWidgets.QWidget):
 
         # Build tabs for SVN integrations
         tabs = QtWidgets.QTabWidget()
+        tabs.setAccessibleName("main_tabwidget_mining")
 
         # XMRig tab
         if self._allow_xmrig:
@@ -1487,7 +1563,7 @@ class MainWindow(QtWidgets.QWidget):
         if mac_unknown or online_unknown:
             # At least one gate is still null - show pending
             icon = "<span style='color:#6f7a88; font-size:14pt;'>●</span>"
-            status_text = "Status pending..."
+            status_text = "Device status unknown"
             effective_mult = 0.0
         else:
             # All gates have values - show real status
@@ -1506,7 +1582,7 @@ class MainWindow(QtWidgets.QWidget):
             else:
                 # Shouldn't happen — _last_pod_ok is only True/False/None
                 icon = "<span style='color:#6f7a88; font-size:14pt;'>●</span>"
-                status_text = "Status pending..."
+                status_text = "Device status unknown"
 
         badge = self._multiplier_badge(effective_mult)
         mult_text = f"{effective_mult:.2f}x" if effective_mult is not None else ""
@@ -1910,7 +1986,9 @@ class MainWindow(QtWidgets.QWidget):
     def _create_bandwidth_display_in_layout(self, layout: QtWidgets.QVBoxLayout) -> None:
         """Create bandwidth monitoring display."""
         self.dlLabel = QtWidgets.QLabel("DL: - Mbps")
+        self.dlLabel.setAccessibleName("main_label_dl_label")
         self.ulLabel = QtWidgets.QLabel("UL: - Mbps")
+        self.ulLabel.setAccessibleName("main_label_ul_label")
 
         for lbl in (self.dlLabel, self.ulLabel):
             lbl.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -1943,17 +2021,21 @@ class MainWindow(QtWidgets.QWidget):
             layout.addWidget(self.rollingChart)
         except Exception:
             self.hourlyChart = QtWidgets.QLabel("Chart unavailable")
+            self.hourlyChart.setAccessibleName("main_label_hourly_chart")
             self.rollingChart = QtWidgets.QLabel("Chart unavailable")
+            self.rollingChart.setAccessibleName("main_label_rolling_chart")
             layout.addWidget(self.hourlyChart)
             layout.addWidget(self.rollingChart)
             
     def _create_audio_display_in_layout(self, layout: QtWidgets.QVBoxLayout) -> None:
         """Create audio level display."""
         self.dbLabel = QtWidgets.QLabel("Level: - dBFS")
+        self.dbLabel.setAccessibleName("main_label_db_label")
         layout.addWidget(self.dbLabel)
         
         # Create level indicator
         self.levelBar = QtWidgets.QProgressBar()
+        self.levelBar.setAccessibleName("main_progressbar_level_bar")
         self.levelBar.setRange(-90, 0)
         self.levelBar.setValue(-90)
         layout.addWidget(self.levelBar)
@@ -1989,6 +2071,7 @@ class MainWindow(QtWidgets.QWidget):
             # Create tab widget to hold live (and optional history) data
             if not hasattr(self, 'data_tabs'):
                 self.data_tabs = QtWidgets.QTabWidget()
+                self.data_tabs.setAccessibleName("main_data_tabs")
                 logging.getLogger(__name__).info("data_tabs QTabWidget created")
 
                 # Live Data tab (skip for miners without live panels)
@@ -2101,6 +2184,7 @@ class MainWindow(QtWidgets.QWidget):
     def _create_status_section(self) -> None:
         """Create status display section."""
         self.statusLabel = QtWidgets.QLabel("")
+        self.statusLabel.setAccessibleName("main_label_status_label")
         self.statusLabel.setWordWrap(False)
         self.statusLabel.setTextFormat(QtCore.Qt.TextFormat.RichText)
         self.statusLabel.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
@@ -3025,12 +3109,18 @@ class MainWindow(QtWidgets.QWidget):
     def _update_audio_data(self, data: dict) -> None:
         """Update audio level display."""
         dbfs = data.get("dbfs")
-        
+
         if dbfs is not None and hasattr(self, 'dbLabel'):
-            self.dbLabel.setText(f"Level: {dbfs:.1f} dBFS")
-            
+            text = f"Level: {dbfs:.1f} dBFS"
+            if getattr(self, '_last_dbLabel_text', None) != text:
+                self._last_dbLabel_text = text
+                self.dbLabel.setText(text)
+
             if hasattr(self, 'levelBar'):
-                self.levelBar.setValue(int(dbfs))
+                val = int(dbfs)
+                if getattr(self, '_last_levelBar_value', None) != val:
+                    self._last_levelBar_value = val
+                    self.levelBar.setValue(val)
                 
     def _update_gnss_data(self, data: dict) -> None:
         """Update GNSS display using SatellitePanel."""

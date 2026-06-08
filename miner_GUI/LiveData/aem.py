@@ -19,9 +19,11 @@ class AemPanel(QtWidgets.QWidget):
         lay.setSpacing(8)
 
         self.icon_label = QtWidgets.QLabel()
+        self.icon_label.setAccessibleName("livedata_aem_label_icon")
         self.icon_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         self.status_label = QtWidgets.QLabel("Loading status...")
+        self.status_label.setAccessibleName("livedata_aem_label_status")
         try:
             self.status_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
             self.status_label.setWordWrap(True)
@@ -85,7 +87,7 @@ class AemPanel(QtWidgets.QWidget):
                 icon = self._warn_pixmap
             # Priority 2: A gate is still null — show pending
             elif mac_mismatch is None or online is None:
-                txt = "Status pending..."
+                txt = "Device status unknown"
                 icon = self._unknown_pixmap
             # Priority 3: Both gates OK - all good
             elif self._is_truthy(online) and self._is_truthy(data):

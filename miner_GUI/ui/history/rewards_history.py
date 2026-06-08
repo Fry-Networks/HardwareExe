@@ -73,6 +73,7 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             # View mode selector (compact)
             mode_layout.addWidget(QtWidgets.QLabel("View:"))
             self.view_mode_combo = QtWidgets.QComboBox()
+            self.view_mode_combo.setAccessibleName("history_rewards_combobox_view_mode")
             self.view_mode_combo.addItem("📊 24h", "24h")
             self.view_mode_combo.addItem("📅 Week", "7d")
             self.view_mode_combo.currentIndexChanged.connect(self._on_view_mode_changed)
@@ -80,9 +81,11 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             
             # Date navigation (for 24h view) - all on same line
             self.date_label = QtWidgets.QLabel("Date:")
+            self.date_label.setAccessibleName("history_rewards_label_date")
             mode_layout.addWidget(self.date_label)
             
             self.prev_btn = QtWidgets.QPushButton("◀")
+            self.prev_btn.setAccessibleName("history_rewards_button_prev")
             self.prev_btn.setMaximumWidth(32)
             self.prev_btn.setMinimumWidth(32)
             self.prev_btn.setMaximumHeight(32)
@@ -92,6 +95,7 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             mode_layout.addWidget(self.prev_btn)
             
             self.date_edit = QtWidgets.QDateEdit()
+            self.date_edit.setAccessibleName("history_rewards_dateedit_date")
             self.date_edit.setCalendarPopup(True)
             self.date_edit.dateChanged.connect(self._load_data)
             self.date_edit.setDisplayFormat("MM/dd")
@@ -99,6 +103,7 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             mode_layout.addWidget(self.date_edit)
             
             self.next_btn = QtWidgets.QPushButton("▶")
+            self.next_btn.setAccessibleName("history_rewards_button_next")
             self.next_btn.setMaximumWidth(32)
             self.next_btn.setMinimumWidth(32)
             self.next_btn.setMaximumHeight(32)
@@ -108,6 +113,7 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             mode_layout.addWidget(self.next_btn)
             
             self.refresh_btn = QtWidgets.QPushButton("🔄")
+            self.refresh_btn.setAccessibleName("history_rewards_button_refresh")
             self.refresh_btn.setMaximumWidth(32)
             self.refresh_btn.setMinimumWidth(32)
             self.refresh_btn.setMaximumHeight(32)
@@ -120,6 +126,7 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             
             # Time zone toggle (compact icon button)
             self.tz_toggle_btn = QtWidgets.QPushButton("🌐UTC")
+            self.tz_toggle_btn.setAccessibleName("history_rewards_button_tz_toggle")
             self.tz_toggle_btn.setMaximumWidth(60)
             self.tz_toggle_btn.setMinimumWidth(60)
             self.tz_toggle_btn.setMaximumHeight(32)
@@ -134,6 +141,7 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             mode_layout.addWidget(QtWidgets.QLabel("View:"))
             
             self.view_mode_combo = QtWidgets.QComboBox()
+            self.view_mode_combo.setAccessibleName("history_rewards_combobox_view_mode")
             self.view_mode_combo.addItem("📊 24 Hours (Detailed)", "24h")
             self.view_mode_combo.addItem("📅 Week (Rewards)", "7d")
             self.view_mode_combo.currentIndexChanged.connect(self._on_view_mode_changed)
@@ -141,9 +149,11 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             
             # Date navigation (for 24h view)
             self.date_label = QtWidgets.QLabel("Date:")
+            self.date_label.setAccessibleName("history_rewards_label_date")
             mode_layout.addWidget(self.date_label)
             
             self.date_edit = QtWidgets.QDateEdit()
+            self.date_edit.setAccessibleName("history_rewards_dateedit_date")
             self.date_edit.setObjectName("rewardsHistoryDateEdit")
             self.date_edit.setCalendarPopup(True)
             self.date_edit.dateChanged.connect(self._load_data)
@@ -184,18 +194,21 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             mode_layout.addWidget(self.date_edit)
             
             self.prev_btn = QtWidgets.QPushButton("◀ Prev")
+            self.prev_btn.setAccessibleName("history_rewards_button_prev")
             self.prev_btn.setToolTip("Previous day")
             self.prev_btn.setMinimumWidth(70)
             self.prev_btn.clicked.connect(self._prev_day)
             mode_layout.addWidget(self.prev_btn)
             
             self.next_btn = QtWidgets.QPushButton("Next ▶")
+            self.next_btn.setAccessibleName("history_rewards_button_next")
             self.next_btn.setToolTip("Next day")
             self.next_btn.setMinimumWidth(70)
             self.next_btn.clicked.connect(self._next_day)
             mode_layout.addWidget(self.next_btn)
             
             self.refresh_btn = QtWidgets.QPushButton("🔄 Refresh")
+            self.refresh_btn.setAccessibleName("history_rewards_button_refresh")
             self.refresh_btn.setToolTip("Reload data for selected date/range")
             self.refresh_btn.setMinimumWidth(90)
             self.refresh_btn.clicked.connect(self._load_data)
@@ -203,6 +216,7 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
             
             # Time zone toggle button
             self.tz_toggle_btn = QtWidgets.QPushButton("🌐 UTC")
+            self.tz_toggle_btn.setAccessibleName("history_rewards_button_tz_toggle")
             self.tz_toggle_btn.setToolTip("Toggle between UTC and Local time")
             self.tz_toggle_btn.setCheckable(True)
             self.tz_toggle_btn.setMinimumWidth(80)
@@ -250,6 +264,7 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
 
         # Status line (always present, used for load/warning messages)
         self.status_label = QtWidgets.QLabel("")
+        self.status_label.setAccessibleName("history_rewards_label_status")
         self.status_label.setWordWrap(False)
         self.status_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
         try:
@@ -357,44 +372,52 @@ class RewardsHistoryWidget(QtWidgets.QWidget):
         
         # Average Multiplier card
         self.avg_mult_card = QtWidgets.QGroupBox("Avg" if is_mobile else "Avg Multiplier")
+        self.avg_mult_card.setAccessibleName("history_rewards_groupbox_avg_mult_card")
         self.avg_mult_card.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.avg_mult_card.setStyleSheet(card_style)
         avg_layout = QtWidgets.QVBoxLayout(self.avg_mult_card)
         avg_layout.setContentsMargins(2 if is_mobile else 8, 2 if is_mobile else 8, 2 if is_mobile else 8, 2 if is_mobile else 8)
         self.avg_mult_value = QtWidgets.QLabel("--")
+        self.avg_mult_value.setAccessibleName("history_rewards_label_avg_mult_value")
         self.avg_mult_value.setStyleSheet(f"font-size: {value_size}; font-weight: bold; color: #10B981;")
         self.avg_mult_value.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         avg_layout.addWidget(self.avg_mult_value)
         
         # Full Reward Hours card
         self.full_hours_card = QtWidgets.QGroupBox("Full" if is_mobile else "Full Reward")
+        self.full_hours_card.setAccessibleName("history_rewards_groupbox_full_hours_card")
         self.full_hours_card.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.full_hours_card.setStyleSheet(card_style)
         full_layout = QtWidgets.QVBoxLayout(self.full_hours_card)
         full_layout.setContentsMargins(2 if is_mobile else 8, 2 if is_mobile else 8, 2 if is_mobile else 8, 2 if is_mobile else 8)
         self.full_hours_value = QtWidgets.QLabel("--")
+        self.full_hours_value.setAccessibleName("history_rewards_label_full_hours_value")
         self.full_hours_value.setStyleSheet(f"font-size: {value_size}; font-weight: bold; color: #3B82F6;")
         self.full_hours_value.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         full_layout.addWidget(self.full_hours_value)
         
         # Zero Reward Hours card
         self.zero_hours_card = QtWidgets.QGroupBox("Zero" if is_mobile else "Zero Reward")
+        self.zero_hours_card.setAccessibleName("history_rewards_groupbox_zero_hours_card")
         self.zero_hours_card.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.zero_hours_card.setStyleSheet(card_style)
         zero_layout = QtWidgets.QVBoxLayout(self.zero_hours_card)
         zero_layout.setContentsMargins(2 if is_mobile else 8, 2 if is_mobile else 8, 2 if is_mobile else 8, 2 if is_mobile else 8)
         self.zero_hours_value = QtWidgets.QLabel("--")
+        self.zero_hours_value.setAccessibleName("history_rewards_label_zero_hours_value")
         self.zero_hours_value.setStyleSheet(f"font-size: {value_size}; font-weight: bold; color: #EF4444;")
         self.zero_hours_value.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         zero_layout.addWidget(self.zero_hours_value)
         
         # Primary Issue card
         self.issue_card = QtWidgets.QGroupBox("Issue" if is_mobile else "Primary Issue")
+        self.issue_card.setAccessibleName("history_rewards_groupbox_issue_card")
         self.issue_card.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.issue_card.setStyleSheet(card_style)
         issue_layout = QtWidgets.QVBoxLayout(self.issue_card)
         issue_layout.setContentsMargins(2 if is_mobile else 8, 2 if is_mobile else 8, 2 if is_mobile else 8, 2 if is_mobile else 8)
         self.issue_value = QtWidgets.QLabel("--")
+        self.issue_value.setAccessibleName("history_rewards_label_issue_value")
         # Match other cards: use same value size and center alignment
         self.issue_value.setStyleSheet(f"font-size: {value_size}; font-weight: bold; color: #F59E0B;")
         self.issue_value.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)

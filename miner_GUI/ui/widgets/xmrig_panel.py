@@ -31,6 +31,7 @@ class XMRigPanel(QtWidgets.QGroupBox):
 
         # Status label
         self._status_label = QtWidgets.QLabel("XMRig: checking status...")
+        self._status_label.setAccessibleName("xmrig_label_status")
         self._status_label.setWordWrap(True)
         self._status_label.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Expanding,
@@ -41,6 +42,7 @@ class XMRigPanel(QtWidgets.QGroupBox):
 
         # Stats row
         self._stats_label = QtWidgets.QLabel("")
+        self._stats_label.setAccessibleName("xmrig_label_stats")
         self._stats_label.setWordWrap(True)
         layout.addWidget(self._stats_label, 1, 0, 1, 2)
 
@@ -49,6 +51,7 @@ class XMRigPanel(QtWidgets.QGroupBox):
         btn_row.addStretch(1)
 
         self._refresh_btn = QtWidgets.QPushButton("Refresh")
+        self._refresh_btn.setAccessibleName("xmrig_button_refresh")
         self._refresh_btn.clicked.connect(self._on_refresh_clicked)
         self._refresh_btn.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Minimum,

@@ -30,6 +30,7 @@ class ToggleSwitch(QtWidgets.QCheckBox):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setChecked(False)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
+        self.setAccessibleName("livedata_sdn_toggle_switch")
 
     def set_syncing(self, syncing: bool) -> None:
         """Switch to blue pill when syncing/in-progress, green when fully OK."""
@@ -153,11 +154,13 @@ class StorageNodeTab(QtWidgets.QGroupBox):
 
         # Toggle switch (hidden — all integrations are forced ON)
         self._toggle = ToggleSwitch(width=58, height=28)
+        self._toggle.setAccessibleName("livedata_sdn_toggle_space_acres")
         self._toggle.stateChanged.connect(self._on_toggle_state)
         layout.addLayout(toggle_row)
 
         # --- Status label ---
         self._status_label = QtWidgets.QLabel("Checking status...")
+        self._status_label.setAccessibleName("livedata_sdn_label_status")
         self._status_label.setWordWrap(True)
         self._status_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
         self._status_label.setMinimumHeight(40)
@@ -165,6 +168,7 @@ class StorageNodeTab(QtWidgets.QGroupBox):
 
         # --- Sync progress bar (hidden by default) ---
         self._sync_bar = QtWidgets.QProgressBar()
+        self._sync_bar.setAccessibleName("livedata_sdn_progressbar_sync")
         self._sync_bar.setRange(0, 10000)
         self._sync_bar.setValue(0)
         self._sync_bar.setTextVisible(True)
@@ -179,6 +183,7 @@ class StorageNodeTab(QtWidgets.QGroupBox):
 
         # --- SSD Config section (always visible) ---
         self._config_widget = QtWidgets.QWidget()
+        self._config_widget.setAccessibleName("livedata_sdn_widget_config")
         config_layout = QtWidgets.QVBoxLayout(self._config_widget)
         config_layout.setContentsMargins(0, 4, 0, 4)
         config_layout.setSpacing(8)
@@ -189,6 +194,7 @@ class StorageNodeTab(QtWidgets.QGroupBox):
         config_layout.addWidget(ssd_label)
 
         self._ssd_combo = QtWidgets.QComboBox()
+        self._ssd_combo.setAccessibleName("livedata_sdn_combobox_ssd")
         self._ssd_combo.setMinimumHeight(32)
         self._ssd_combo.addItem("Scanning for SSD drives...")
         self._ssd_combo.setEnabled(False)
@@ -203,6 +209,7 @@ class StorageNodeTab(QtWidgets.QGroupBox):
         path_row = QtWidgets.QHBoxLayout()
         path_row.setSpacing(6)
         self._path_input = QtWidgets.QLineEdit()
+        self._path_input.setAccessibleName("livedata_sdn_lineedit_path_input")
         self._path_input.setMinimumHeight(30)
         self._path_input.setReadOnly(True)
         self._path_input.setPlaceholderText("Select a folder on the SSD drive")
@@ -210,6 +217,7 @@ class StorageNodeTab(QtWidgets.QGroupBox):
         path_row.addWidget(self._path_input, 1)
 
         self._browse_btn = QtWidgets.QPushButton("Browse")
+        self._browse_btn.setAccessibleName("livedata_sdn_button_browse")
         self._browse_btn.setFixedHeight(30)
         self._browse_btn.setFixedWidth(80)
         self._browse_btn.clicked.connect(self._on_browse_path)
@@ -223,11 +231,13 @@ class StorageNodeTab(QtWidgets.QGroupBox):
         size_header.addWidget(size_label)
         size_header.addStretch(1)
         self._size_value_label = QtWidgets.QLabel("")
+        self._size_value_label.setAccessibleName("livedata_sdn_label_size_value")
         self._size_value_label.setStyleSheet("color: #E5E7EB; font-weight: 600;")
         size_header.addWidget(self._size_value_label)
         config_layout.addLayout(size_header)
 
         self._size_slider = QtWidgets.QSlider(Qt.Orientation.Horizontal)
+        self._size_slider.setAccessibleName("livedata_sdn_slider_size_slider")
         self._size_slider.setMinimum(MIN_FARM_SIZE_GB)
         self._size_slider.setMaximum(500)
         self._size_slider.setSingleStep(10)
@@ -245,6 +255,7 @@ class StorageNodeTab(QtWidgets.QGroupBox):
             btn.clicked.connect(lambda checked=False, g=preset_gb: self._apply_preset(g))
             presets_row.addWidget(btn)
         self._max_preset_btn = QtWidgets.QPushButton("Maximum")
+        self._max_preset_btn.setAccessibleName("livedata_sdn_button_max_preset")
         self._max_preset_btn.setFixedHeight(26)
         self._max_preset_btn.setStyleSheet("font-size: 11px; padding: 2px 8px;")
         self._max_preset_btn.clicked.connect(self._apply_max_preset)
@@ -262,6 +273,7 @@ class StorageNodeTab(QtWidgets.QGroupBox):
 
         # Save config button
         self._save_config_btn = QtWidgets.QPushButton("Save Configuration")
+        self._save_config_btn.setAccessibleName("livedata_sdn_button_save_config")
         self._save_config_btn.setMinimumHeight(34)
         self._save_config_btn.setStyleSheet(
             "QPushButton { background-color: #22c55e; color: #0b101a; font-weight: 600; "
@@ -314,9 +326,10 @@ class StorageNodeTab(QtWidgets.QGroupBox):
 
             self._ssd_combo.setCurrentIndex(best_idx)
 
-            # Show motivational message if config hasn't been saved yet
+            # Auto-configure defaults silently when SSDs detected but not yet configured
             if not self._is_configured:
-                self._status_label.setText(self._unconfigured_message())
+                self._on_ssd_changed(best_idx)
+                self._is_configured = True
 
         self._sync_toggle_enabled()
         self._update_config_visibility()
@@ -579,11 +592,8 @@ class StorageNodeTab(QtWidgets.QGroupBox):
         self._toggle.setEnabled(should_enable)
 
     def _update_config_visibility(self) -> None:
-        """Show/hide the SSD config section based on current state."""
-        if not self._available_ssds or self._toggle.isChecked() or self._is_busy:
-            self._config_widget.hide()
-        else:
-            self._config_widget.show()
+        """Config managed by PoC service, not user — always hide."""
+        self._config_widget.hide()
 
     def set_toggle_state(self, enabled: bool) -> None:
         """Set toggle state without emitting signal, then reconcile UI."""
@@ -667,6 +677,7 @@ class SdnPanel(QtWidgets.QWidget):
 
         # Create tab widget
         tabs = QtWidgets.QTabWidget()
+        tabs.setAccessibleName("livedata_sdn_tabwidget")
         tabs.setTabPosition(QtWidgets.QTabWidget.TabPosition.North)
         tabs.setDocumentMode(True)
         tabs.setUsesScrollButtons(False)

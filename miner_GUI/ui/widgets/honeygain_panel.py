@@ -50,9 +50,11 @@ class HoneygainPanel(QtWidgets.QGroupBox):
 
         # Toggle switch (hidden — all integrations are forced ON)
         self._toggle = ToggleSwitch(width=58, height=28)
+        self._toggle.setAccessibleName("honeygain_toggle_switch")
         self._toggle.stateChanged.connect(self._on_toggle_state)
 
         self._status_label = QtWidgets.QLabel("Honeygain status: unavailable")
+        self._status_label.setAccessibleName("honeygain_label_status")
         self._status_label.setWordWrap(True)
         self._status_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
         self._status_label.setMinimumHeight(36)
@@ -66,10 +68,12 @@ class HoneygainPanel(QtWidgets.QGroupBox):
         #layout.addWidget(self._consent_hint, 2, 0, 1, 1)
 
         self._learn_more_btn = QtWidgets.QPushButton("Learn more")
+        self._learn_more_btn.setAccessibleName("honeygain_button_learn_more")
         self._learn_more_btn.clicked.connect(self._open_external_learn_more)
         self._learn_more_btn.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
 
         self._details_btn = QtWidgets.QPushButton("Details")
+        self._details_btn.setAccessibleName("honeygain_button_details")
         self._details_btn.clicked.connect(self._show_details_dialog)
         self._details_btn.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
         # Add spacer row to push button down on narrow layouts
@@ -282,6 +286,7 @@ class _HoneygainDetailsDialog(QtWidgets.QDialog):
         layout.setSpacing(10)
 
         self._status_label = QtWidgets.QLabel("Honeygain details unavailable")
+        self._status_label.setAccessibleName("honeygain_label_status")
         self._status_label.setWordWrap(True)
         layout.addWidget(self._status_label)
 
@@ -303,6 +308,7 @@ class _HoneygainDetailsDialog(QtWidgets.QDialog):
         layout.addLayout(grid)
 
         self._details = QtWidgets.QPlainTextEdit()
+        self._details.setAccessibleName("honeygain_plaintextedit_details")
         self._details.setReadOnly(True)
         self._details.setMaximumHeight(160)
         self._details.hide()
@@ -311,9 +317,11 @@ class _HoneygainDetailsDialog(QtWidgets.QDialog):
         btn_row = QtWidgets.QHBoxLayout()
         btn_row.addStretch(1)
         self._refresh_btn = QtWidgets.QPushButton("Refresh")
+        self._refresh_btn.setAccessibleName("honeygain_button_refresh")
         self._refresh_btn.clicked.connect(self.refresh_clicked.emit)  # type: ignore[arg-type]
         btn_row.addWidget(self._refresh_btn)
         close_btn = QtWidgets.QPushButton("Close")
+        close_btn.setAccessibleName("honeygain_button_close")
         close_btn.clicked.connect(self.close)
         btn_row.addWidget(close_btn)
         layout.addLayout(btn_row)

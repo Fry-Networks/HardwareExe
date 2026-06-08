@@ -7,7 +7,7 @@ PROFILES = {
     # Node roles only track online status by hour; no live metrics
     "SVN": {"group":"SVN",       "display":"Storage Validator Node",        "metric":"Online status",    "unit":""},
     "SDN": {"group":"SDN",       "display":"Storage Decentralization Node", "metric":"Online status",    "unit":""},
-    "RDN": {"group":"RDN",       "display":"Rewards Decentralization Node", "metric":"Online status",    "unit":""},
+    "RDN": {"group":"RDN",       "display":"Compute Node", "metric":"Online status",    "unit":""},
     "IRM": {"group":"Radiation", "display":"Radiation Miner",               "metric":"Radiation level",  "unit":"CPM"},
     "AEM": {"group":"AEM",       "display":"AEM Miner",             "metric":"Proof of Installed", "unit":""},
     "ISM": {"group":"Satellite", "display":"Indoor Satellite Miner","metric":"GNSS stream", "unit":""},

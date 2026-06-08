@@ -15,7 +15,9 @@ class BandwidthPanel(QtWidgets.QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(6)
         self.dl = QtWidgets.QProgressBar()
+        self.dl.setAccessibleName("livedata_bandwidth_progressbar_dl")
         self.ul = QtWidgets.QProgressBar()
+        self.ul.setAccessibleName("livedata_bandwidth_progressbar_ul")
         try:
             if self._screen_size == "mobile":
                 fmt_dl, fmt_ul = "Download: %v Mbps", "Upload: %v Mbps"

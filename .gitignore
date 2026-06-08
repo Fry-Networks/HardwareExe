@@ -43,3 +43,10 @@ miner_gui.log
 
 # Testing artifacts
 TESTING/
+qa-evidence/
+*.bak.*
+*.bak
+config_profile.py.qa-prebuild.*
+config_profile.py.qa*
+.backups/
+config_profile.py.qa*

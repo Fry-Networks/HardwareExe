@@ -77,6 +77,7 @@ def build_pod_pixmaps(size: QtCore.QSize) -> Tuple[QtGui.QPixmap, QtGui.QPixmap,
 def init_pod_badge(self, parent_layout: QtWidgets.QBoxLayout, compact: bool = False) -> None:
     """Create PoD badge UI (icon + text), styled similar to AEM PoI indicator."""
     self.podStatusWidget = QtWidgets.QWidget()
+    self.podStatusWidget.setAccessibleName("pod_widget_pod_status_widget")
     layout_cls = QtWidgets.QHBoxLayout if compact else QtWidgets.QVBoxLayout
     v = layout_cls(self.podStatusWidget)
     if compact:
@@ -91,12 +92,14 @@ def init_pod_badge(self, parent_layout: QtWidgets.QBoxLayout, compact: bool = Fa
     size = QtCore.QSize(32, 32) if compact else QtCore.QSize(84, 84)
     self._pod_icons = build_pod_pixmaps(size)
     self.podStatusIcon = QtWidgets.QLabel()
+    self.podStatusIcon.setAccessibleName("pod_label_pod_status_icon")
     self.podStatusIcon.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
     self.podStatusIcon.setFixedSize(size)
     if self._pod_icons and self._pod_icons[2] is not None:
         self.podStatusIcon.setPixmap(self._pod_icons[2])
 
     self.podStatusText = QtWidgets.QLabel("")
+    self.podStatusText.setAccessibleName("pod_label_pod_status_text")
     self.podStatusText.setAlignment(
         QtCore.Qt.AlignmentFlag.AlignCenter if not compact else QtCore.Qt.AlignmentFlag.AlignVCenter
     )
@@ -205,7 +208,7 @@ def update_pod_badge(self, raw_value: Any, online_status: Optional[bool] = None,
             # Gates not yet set — show pending
             if self.podStatusWidget and icon_unknown is not None:
                 self.podStatusIcon.setPixmap(icon_unknown)
-                self.podStatusText.setText("pending..." if is_mobile else "Mining status pending...")
+                self.podStatusText.setText("Unknown" if is_mobile else "Device status unknown")
                 self.podStatusText.setStyleSheet("color: #6f7a88; font-size: 11pt; font-weight: 600;")
         elif _online == "online":
             if self.podStatusWidget and icon_ok is not None:

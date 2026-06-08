@@ -113,24 +113,42 @@ def read_last_line(csv_file: Path) -> Optional[Dict[str, Any]]:
     
     try:
         with open(csv_file, 'r', encoding='utf-8-sig', newline='') as f:
-            # Read entire file but only parse last line (more reliable than seeking)
-            # For large files, we could optimize this with binary seeking + line boundary detection
-            lines = f.readlines()
-            
-            if len(lines) < 2:
-                # Need at least header + one data line
+            # Read header first (needed for DictReader mapping)
+            header = f.readline()
+            if not header:
                 return None
-            
-            # Parse header and last line using full file (DictReader needs actual header)
-            reader = csv.DictReader(lines)
-            last_row = None
-            for last_row in reader:
-                pass  # Iterate to get the last row
-            
-            # Strip BOM from field names if present
+
+            # Tail-seek: read last ~4 KB to avoid O(n) full-file read
+            tail_size = 4096
+            f.seek(0, 2)  # Seek to end
+            file_size = f.tell()
+            seek_pos = max(0, file_size - tail_size)
+            f.seek(seek_pos)
+            tail = f.read()
+
+            # Split tail into lines; drop first because it may be partial
+            tail_lines = tail.splitlines()
+            if seek_pos > 0 and tail_lines:
+                tail_lines = tail_lines[1:]
+
+            # Find last non-empty data line
+            last_data_line = None
+            for line in reversed(tail_lines):
+                stripped = line.strip()
+                if stripped:
+                    last_data_line = stripped
+                    break
+
+            if last_data_line is None:
+                return None
+
+            # Parse header + last line as a single two-row CSV
+            two_row_text = header.strip() + '\n' + last_data_line + '\n'
+            reader = csv.DictReader(two_row_text.splitlines())
+            last_row = next(reader, None)
+
             if last_row:
                 last_row = {k.lstrip('\ufeff'): v for k, v in last_row.items()}
-                # Parse timestamp into a timezone-aware datetime (treat trailing Z as UTC)
                 try:
                     if 'timestamp' in last_row and isinstance(last_row['timestamp'], str):
                         ts_raw = last_row['timestamp']
@@ -139,10 +157,9 @@ def read_last_line(csv_file: Path) -> Optional[Dict[str, Any]]:
                             parsed = parsed.replace(tzinfo=timezone.utc)
                         last_row['timestamp'] = parsed
                 except Exception:
-                    # Leave as string if parsing fails
                     pass
             return last_row
-            
+
     except Exception as exc:
         log_step("csv_read_last_line_failed", {
             "file": str(csv_file),

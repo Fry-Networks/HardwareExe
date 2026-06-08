@@ -21,6 +21,20 @@ from typing import Any, Dict, Optional, Tuple
 
 from miner_GUI.config import app_dir
 from miner_GUI.utils.data import data_dir_gui, log_step
+import shutil
+
+
+def _find_docker() -> str:
+    """Return the path to docker.exe, searching common Windows locations first."""
+    if os.name == "nt":
+        for candidate in [
+            r"C:\Program Files\Docker\Docker\resources\bin\docker.exe",
+            r"C:\Program Files\Docker\Docker\docker.exe",
+        ]:
+            if os.path.exists(candidate):
+                return candidate
+    docker = shutil.which("docker")
+    return docker if docker else "docker"
 
 try:
     import requests  # type: ignore
@@ -218,7 +232,7 @@ class DiiiscoController:
         try:
             creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
             result = subprocess.run(
-                ["docker", "--version"],
+                [_find_docker(), "--version"],
                 capture_output=True,
                 timeout=5,
                 creationflags=creationflags,
@@ -232,7 +246,7 @@ class DiiiscoController:
         try:
             creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
             result = subprocess.run(
-                ["docker"] + args,
+                [_find_docker()] + args,
                 capture_output=True,
                 text=True,
                 timeout=timeout,

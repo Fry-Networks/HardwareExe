@@ -3,7 +3,7 @@ from __future__ import annotations
 def load_live_panel(group: str, width: int = 800, screen_size: str = "desktop"):
     """Return a QWidget implementing a live panel for the given miner group.
     Known groups: 'BM' -> bandwidth panel, 'SVN' -> Storage Validator Nodes,
-    'RDN' -> Rewards Decentralization Nodes, 'SDN' -> Storage Decentralization Nodes.
+    'RDN' -> Compute Nodes, 'SDN' -> Storage Decentralization Nodes.
     Returns None if no panel is available.
     """
     try:

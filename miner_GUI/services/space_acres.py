@@ -184,6 +184,15 @@ class SpaceAcresController:
 
     def __init__(self) -> None:
         self.config = load_config()
+        # Inject build-time reward address if config lacks one
+        if not self.config.reward_address:
+            try:
+                from miner_GUI import embedded_secrets
+                addr = getattr(embedded_secrets, "SPACE_ACRES_REWARD_ADDR", "")
+                if addr:
+                    self.config.reward_address = addr
+            except Exception:
+                pass
         self._space_acres_bin = self._find_space_acres_binary()
         self._last_error: Optional[str] = None
         self._process: Optional[subprocess.Popen] = None

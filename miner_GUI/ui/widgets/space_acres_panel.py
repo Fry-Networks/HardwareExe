@@ -37,10 +37,12 @@ class SpaceAcresPanel(QtWidgets.QGroupBox):
 
         # Toggle switch (hidden — all integrations are forced ON)
         self._toggle = ToggleSwitch(width=58, height=28)
+        self._toggle.setAccessibleName("spaceacres_toggle_switch")
         self._toggle.stateChanged.connect(self._on_toggle_state)
 
         # Status label
         self._status_label = QtWidgets.QLabel("Space Acres: checking status...")
+        self._status_label.setAccessibleName("spaceacres_label_status")
         self._status_label.setWordWrap(True)
         self._status_label.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Expanding,
@@ -51,6 +53,7 @@ class SpaceAcresPanel(QtWidgets.QGroupBox):
 
         # Sync progress bar (hidden by default)
         self._sync_bar = QtWidgets.QProgressBar()
+        self._sync_bar.setAccessibleName("spaceacres_progressbar_sync")
         self._sync_bar.setRange(0, 10000)
         self._sync_bar.setValue(0)
         self._sync_bar.setTextVisible(True)
@@ -65,6 +68,7 @@ class SpaceAcresPanel(QtWidgets.QGroupBox):
 
         # Stats row
         self._stats_label = QtWidgets.QLabel("")
+        self._stats_label.setAccessibleName("spaceacres_label_stats")
         self._stats_label.setWordWrap(True)
         layout.addWidget(self._stats_label, 3, 0, 1, 2)
 
@@ -73,6 +77,7 @@ class SpaceAcresPanel(QtWidgets.QGroupBox):
         btn_row.addStretch(1)
 
         self._refresh_btn = QtWidgets.QPushButton("Refresh")
+        self._refresh_btn.setAccessibleName("spaceacres_button_refresh")
         self._refresh_btn.clicked.connect(self._on_refresh_clicked)
         self._refresh_btn.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Minimum,

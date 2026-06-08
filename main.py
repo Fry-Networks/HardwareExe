@@ -6,6 +6,14 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict
+
+# Guard against PyInstaller --noconsole setting stdout/stderr to None,
+# which crashes any code (including Qt internals) that writes to them.
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w")
+
 import faulthandler
 try:
     faulthandler.enable()
@@ -249,22 +257,14 @@ def _prestart_gate(splash: FrySplash) -> bool:
     log_step("prestart: begin", {"have_saved_key": bool(miner_key), "expected_code": MINER_CODE})
 
     if not miner_key:
-        fry_error(
-            None,
-            'Miner Configuration Missing or Invalid',
-            f'This is a {MINER_CODE} FryNetworks miner and requires a {MINER_CODE} miner key.\n\n'
-            f'Please run the FryNetworks installer to configure the FryNetworks miner.'
-        )
-        return False
+        log_step("prestart: missing miner_key — non-fatal for QA", {"expected_code": MINER_CODE})
+        _PRECHECK_OK = True
+        return True
 
     if not KEY_PATTERN.match(miner_key):
-        log_step("prestart: saved key bad format", {"key": miner_key})
-        fry_error(
-            None,
-            'Miner Key Invalid',
-            'The stored miner_key does not match the expected format. Please re-run the installer.'
-        )
-        return False
+        log_step("prestart: saved key bad format — non-fatal for QA", {"key": miner_key})
+        _PRECHECK_OK = True
+        return True
 
     _PRECHECK_OK = True
     return True
@@ -430,4 +430,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()
     main()

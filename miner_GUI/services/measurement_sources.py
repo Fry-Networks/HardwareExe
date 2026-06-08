@@ -106,8 +106,24 @@ def sample_decibel(idx: Optional[int]) -> Dict[str, Any]:
 
         sr = 16000
         dur = 0.25
-        audio = sd.rec(int(sr * dur), samplerate=sr, channels=1, dtype="float32", device=idx)
-        sd.wait()
+        frames_needed = int(sr * dur)
+        frames = []
+
+        def _audio_callback(indata, _frames, _time_info, _status):
+            frames.append(indata.copy())
+
+        with sd.InputStream(
+            samplerate=sr, channels=1, dtype="float32", device=idx, callback=_audio_callback
+        ):
+            # Stream runs in background thread; poll until we have enough samples
+            deadline = time.time() + dur + 0.1
+            while sum(f.shape[0] for f in frames) < frames_needed and time.time() < deadline:
+                time.sleep(0.005)
+
+        if not frames:
+            return {"err": "no audio frames captured"}
+
+        audio = np.concatenate(frames)[:frames_needed]
         rms = float(np.sqrt(np.mean(audio**2)) + 1e-12)
         dbfs = 20 * np.log10(rms)
         dbfs = max(-90.0, min(0.0, dbfs))
