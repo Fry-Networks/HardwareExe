@@ -50,3 +50,25 @@ config_profile.py.qa-prebuild.*
 config_profile.py.qa*
 .backups/
 config_profile.py.qa*
+
+# open-source hygiene
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+id_rsa
+id_ed25519
+.npmrc
+.netrc
+*.tfstate
+*.tfstate.*
+kubeconfig
+serviceAccount*.json
+secrets.json
+*.sqlite
+*.sqlite3
+*.db
